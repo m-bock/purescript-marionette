@@ -4,6 +4,7 @@
   , "aff-promise"
   , "console"
   , "effect"
+  , "either"
   , "maybe"
   , "node-readline"
   , "prelude"

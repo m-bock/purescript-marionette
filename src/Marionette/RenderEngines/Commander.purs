@@ -1,4 +1,4 @@
-module Marionette.Views.Commander
+module Marionette.RenderEngines.Commander
   ( KeyInputConfig
   , KeyboardUserInput
   , PureCompleter

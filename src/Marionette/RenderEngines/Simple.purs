@@ -1,6 +1,5 @@
-module Marionette.Views
+module Marionette.RenderEngines.Simple
   ( eventlessRenderEngine
-  , module Exp
   , noRenderEngine
   )
   where
@@ -9,7 +8,6 @@ import Prelude
 
 import Effect.Class.Console (log)
 import Marionette.Types (RenderEngine)
-import Marionette.Views.Commander (KeyInputConfig, KeyboardUserInput, PureCompleter, Surface, TextInputConfig, defaultKeyInputConfig, defaultTextInputConfig) as Exp
 
 eventlessRenderEngine :: forall sta msg. { clearScreen :: Boolean } -> (sta -> String) -> RenderEngine msg sta
 eventlessRenderEngine opts view =
