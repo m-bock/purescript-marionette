@@ -23,6 +23,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
+import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (Aff, Canceler(..), Error, Fiber, error, launchAff, launchAff_, makeAff)
 import Effect.Aff as Aff
@@ -131,6 +132,7 @@ initProgram env = do
 
 runFreshThread :: forall msg sta. Eq sta => Env msg sta -> msg -> Aff Unit
 runFreshThread env msg = checkExit env msg do
+
   id <- liftEffect $
     Ref.read env.nextThreadIdRef <*
       Ref.modify_ (_ + one) env.nextThreadIdRef
@@ -165,14 +167,14 @@ view env = do
 checkExit :: forall msg sta. Env msg sta -> msg -> Aff Unit -> Aff Unit
 checkExit env msg cont = do
   state <- liftEffect $ Ref.read env.stateRef
-  when (env.config.exitIf msg state) do
+  if env.config.exitIf msg state then do
     threads <- liftEffect $ Ref.read env.threadsRef
     threads
       # Map.values
       # traverse_ (Aff.killFiber $ error "Cleanup error")
-    log "ss"
     (unwrap env.program.renderer).onFinish
     liftEffect $ env.programCallback $ Right state
+  else
     cont
 
 runProgram :: forall msg sta. Eq sta => Program msg sta -> Config msg sta -> Aff sta

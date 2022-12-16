@@ -7,24 +7,29 @@ module Test.Examples.Snake.Core
   , Snake(..)
   , Tile(..)
   , Vec
+  , applySnake
   , boardToMaze
+  , findFreeSpots
   , findSnake
   , findSnakeDirection
+  , mazeToBoard
   , mkBoard
   , parseLevelSpec
   , printBoard
-  ) where
+  )
+  where
 
 import Prelude
 
 import Data.Array as Arr
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
+import Data.Either (Either(..), note)
 import Data.Foldable (foldM)
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, un)
+import Data.Newtype (class Newtype, over, un)
 import Data.Show.Generic (genericShow)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -40,7 +45,6 @@ import Unsafe.Coerce (unsafeCoerce)
 --- Vec 
 
 type Vec = Vector Int
-
 
 --- Tile
 
@@ -66,7 +70,6 @@ derive instance Newtype Board _
 
 data Snake = Snake Vec (Array Vec)
 
-
 derive instance Generic Snake _
 
 instance Show Snake where
@@ -78,6 +81,7 @@ newtype Maze = Maze (Grid MazeItem)
 
 derive instance Eq Maze
 
+derive instance Newtype Maze _
 
 derive instance Generic Maze _
 
@@ -88,7 +92,6 @@ data MazeItem = Maze_Wall | Maze_Floor
 
 derive instance Eq MazeItem
 
-
 derive instance Generic MazeItem _
 
 instance Show MazeItem where
@@ -96,13 +99,18 @@ instance Show MazeItem where
 
 newtype Goodie = Goodie Vec
 
+derive instance Eq Goodie
+
+derive instance Generic Goodie _
+
+instance Show Goodie where
+  show = genericShow
+
 data LevelSpec = LevelSpec Snake Maze Direction
 
 ---
 
 type Size = Vec
-
-
 
 -- f :: forall m. Env m -> m (Array Goodie)
 -- f = unfold
@@ -113,15 +121,14 @@ type Size = Vec
 -- oneOf :: Env m -> NonEmptyArray a -> m a
 -- oneOf = unsafeCoerce 1
 
-
-parseLevelSpecFromBoard :: Board -> Maybe LevelSpec
-parseLevelSpecFromBoard board = ado
+parseLevelSpecFromBoard :: Board -> Either String LevelSpec
+parseLevelSpecFromBoard board = note "E7" ado
   snake <- findSnake board
   let maze = boardToMaze board
   direction <- findSnakeDirection board
   in LevelSpec snake maze direction
 
-parseLevelSpec :: String -> Maybe LevelSpec
+parseLevelSpec :: String -> Either String LevelSpec
 parseLevelSpec = parseBoard >=> parseLevelSpecFromBoard
 
 -- positionsInSize :: Vec -> Array Vec
@@ -135,12 +142,11 @@ mazeItemToTile = case _ of
   Maze_Wall -> Tile_Wall
   Maze_Floor -> Tile_Floor
 
-findFreeSpots :: Board -> Maybe (NonEmptyArray Vec)
+findFreeSpots :: Board -> Array Vec
 findFreeSpots = un Board
   >>> Grid.toMap
   >>> Map.toUnfoldable
   >>> Arr.mapMaybe (\(Tuple k v) -> if v == Tile_Floor then Just k else Nothing)
-  >>> NEA.fromArray
 
 mkBoard :: Maze -> Snake -> Goodie -> Maybe Board
 mkBoard (Maze maze) (Snake snakeHead snakeTail) (Goodie goodie) =
@@ -150,6 +156,20 @@ mkBoard (Maze maze) (Snake snakeHead snakeTail) (Goodie goodie) =
     >>= (\grid -> foldM (\g v -> Grid.insert v Tile_SnakeBody g) grid snakeTail)
     >>= (\grid -> Grid.insert goodie Tile_Goodie grid)
     <#> Board
+
+mazeToBoard :: Maze -> Board
+mazeToBoard = un Maze >>> map mazeItemToTile >>> Board
+
+applySnake :: Snake -> Board -> Maybe Board
+applySnake (Snake snakeHead snakeTail) (Board board) = board
+  # (\grid -> Grid.insert snakeHead Tile_SnakeHead grid)
+  >>= (\grid -> foldM (\g v -> Grid.insert v Tile_SnakeBody g) grid snakeTail)
+  <#> Board
+
+applyGoodie :: Goodie -> Board -> Maybe Board
+applyGoodie (Goodie goodie) (Board board) = board
+  # (\grid -> Grid.insert goodie Tile_Goodie grid)
+  <#> Board
 
 findSnake :: Board -> Maybe Snake
 findSnake (Board grid) = ado
@@ -177,17 +197,17 @@ boardToMaze = un Board
     _ -> Maze_Floor
   >>> Maze
 
-parseChar :: Char -> Maybe Tile
+parseChar :: Char -> Either String Tile
 parseChar = case _ of
-  '#' -> Just Tile_Wall
-  'O' -> Just Tile_SnakeBody
-  '+' -> Just Tile_SnakeHead
-  '_' -> Just Tile_Floor
-  _ -> Nothing
+  '#' -> Right Tile_Wall
+  'O' -> Right Tile_SnakeBody
+  '+' -> Right Tile_SnakeHead
+  ' ' -> Right Tile_Floor
+  c -> Left $ "Invalid char" <> show c
 
-parseBoard :: String -> Maybe Board
+parseBoard :: String -> Either String Board
 parseBoard str = do
-  charBoard <- CharGrid.fromString str
+  charBoard <- note "E1" $ CharGrid.fromString str
   board <- traverse parseChar charBoard
   pure $ Board board
 

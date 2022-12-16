@@ -2,6 +2,7 @@ module Test.Examples.Snake.View where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Marionette.Renderers.Commander (KeyboardUserInput(..), defaultKeyInput)
 import Marionette.Renderers.Commander as Com
 import Test.Examples.Snake.Model (Msg(..), State(..))
@@ -12,9 +13,18 @@ view = case _ of
     ""
     ( KeyInput
         ( case _ of
-            { name: "s" } -> Msg_Start
-            _ -> Msg_NoOp
+            { name: "s" } -> Just Msg_Start
+            _ -> Nothing
         )
         { prompt: "Press 's' to start!" }
     )
+
+  Sta_Playing game -> Com.Surface
+    "playing"
+    NoInput
+
+  Sta_Error msg -> Com.Surface
+    ("Error: " <> msg)
+    NoInput
+
   _ -> Com.Surface "..." NoInput

@@ -50,11 +50,11 @@ sendMsg msg = MarionetteT do
 mkController :: forall msg sta. Control msg sta Aff -> Controller msg sta
 mkController mc = Controller \sendMsg_ state msg -> runMarionetteT sendMsg_ state $ mc msg
 
-class MonadSendMsg msg m where
-  sendMsg' :: msg -> m Unit
+-- class MonadSendMsg msg m where
+--   sendMsg :: msg -> m Unit
 
-class
-  ( MonadSendMsg msg m
-  , MonadState sta m
-  ) <=
-  MonadMarionette msg sta m
+-- class
+--   ( MonadSendMsg msg m
+--   , MonadState sta m
+--   ) <=
+--   MonadMarionette msg sta m

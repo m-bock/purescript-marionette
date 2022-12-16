@@ -18,14 +18,13 @@ import Prelude
 import Control.Promise (Promise, toAffE)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
-
----
 
 data Surface msg = Surface String (KeyboardUserInput msg)
 
@@ -51,8 +50,8 @@ defaultKeyInput = { prompt: "" }
 type PureCompleter = String -> { completions :: Array String, matched :: String }
 
 data KeyboardUserInput msg
-  = TextInput (String -> msg) TextInput
-  | KeyInput (NativeNodeKey -> msg) KeyInput
+  = TextInput (String -> Maybe msg) TextInput
+  | KeyInput (NativeNodeKey -> Maybe msg) KeyInput
   | NoInput
 
 type Config =
@@ -82,11 +81,11 @@ type NativeNodeKey =
 type View msg sta = sta -> Surface msg
 
 mkRenderer_ :: forall msg sta. View msg sta -> Renderer msg sta
-mkRenderer_ = mkRenderer defaultConfig
+mkRenderer_ view = mkRenderer view defaultConfig
 
-mkRenderer :: forall msg sta. Config -> View msg sta -> Renderer msg sta
-mkRenderer cfg view = Renderer
-  { onInit, onState, onFinish: log eraseScreen }
+mkRenderer :: forall msg sta. View msg sta -> Config -> Renderer msg sta
+mkRenderer view cfg = Renderer
+  { onInit, onState, onFinish }
   where
   onInit = liftEffect emitKeypressEvents
 
@@ -113,13 +112,17 @@ mkRenderer cfg view = Renderer
     TextInput mkMsg { prompt, completions } -> do
       log prompt
       answer <- getAnswer completions
-      let msg = mkMsg answer
-      onMsg msg
+      case mkMsg answer of
+        Just msg -> onMsg msg
+        Nothing -> pure unit
     KeyInput mkMsg { prompt } -> do
-      log prompt
+      log $ cfg.prompt prompt
       key <- getKey
-      let msg = mkMsg key
-      onMsg msg
+      case mkMsg key of
+        Just msg -> onMsg msg
+        Nothing -> pure unit
+
+  onFinish = log eraseScreen
 
 ---
 
