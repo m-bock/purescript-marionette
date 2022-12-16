@@ -8,8 +8,7 @@ module Marionette
   , noController
   , noRenderer
   , runProgram
-  )
-  where
+  ) where
 
 import Prelude
 

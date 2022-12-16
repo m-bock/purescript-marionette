@@ -3,8 +3,7 @@ module Marionette.Renderers.Eventless
   , defaultConfig
   , mkRenderer
   , mkRenderer_
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -29,7 +28,6 @@ mkRenderer opts view = Renderer
 
 mkRenderer_ :: forall sta msg. View sta -> Renderer msg sta
 mkRenderer_ = mkRenderer defaultConfig
-
 
 ---
 
