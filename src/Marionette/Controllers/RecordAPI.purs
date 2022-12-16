@@ -5,12 +5,11 @@ module Marionett.ControlHandlers
 
 import Prelude
 
-import Data.Maybe (Maybe)
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
-import Marionette.Types (Controller(..))
+import Marionette.Types (Controller(..), State(..))
 
-type Control msg sta = RecordAPI msg sta -> msg -> Aff (Maybe msg)
+type Control msg sta = RecordAPI msg sta -> msg -> Aff Unit
 
 type RecordAPI msg sta =
   { sendMsg :: msg -> Aff Unit
@@ -21,7 +20,7 @@ type RecordAPI msg sta =
   }
 
 mkController :: forall msg sta. Control msg sta -> Controller msg sta
-mkController control = Controller \sendMsg_ state msg ->
+mkController control = Controller \sendMsg_ (State state) msg ->
   let
     api =
       { sendMsg: sendMsg_

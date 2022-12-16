@@ -23,6 +23,8 @@ data State
 
 derive instance Generic State _
 
+derive instance Eq State
+
 instance Show State where
   show = genericShow
 
@@ -35,6 +37,8 @@ newtype Game = Game
   }
 
 derive instance Generic Game _
+
+derive instance Eq Game
 
 instance Show Game where
   show = genericShow

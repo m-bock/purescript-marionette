@@ -10,9 +10,9 @@ import Control.Monad.Reader (class MonadTrans, ReaderT(..), ask, lift, runReader
 import Control.Monad.State (class MonadState)
 import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
-import Marionette.Types (Controller(..), SendMsg, State)
+import Marionette.Types (Controller(..), SendMsg, State(..))
 
-type Control msg sta m = msg -> MarionetteT msg sta m (Maybe msg)
+type Control msg sta m = msg -> MarionetteT msg sta m Unit
 
 ---
 
@@ -36,8 +36,8 @@ instance MonadTrans (MarionetteT msg sta)
 
 instance Monad m => MonadState sta (MarionetteT msg sta m) where
   state f = MarionetteT do
-    MarionetteEnv env <- ask
-    lift $ env.state f
+    MarionetteEnv { state: State state } <- ask
+    lift $ state f
 
 runMarionetteT :: forall msg sta m a. SendMsg msg m -> State sta m -> MarionetteT msg sta m a -> m a
 runMarionetteT sendMsg_ state (MarionetteT ma) = runReaderT ma $ MarionetteEnv { sendMsg: sendMsg_, state }

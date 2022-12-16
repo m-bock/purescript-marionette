@@ -72,7 +72,11 @@ derive instance Generic Snake _
 instance Show Snake where
   show = genericShow
 
+derive instance Eq Snake
+
 newtype Maze = Maze (Grid MazeItem)
+
+derive instance Eq Maze
 
 
 derive instance Generic Maze _
@@ -81,6 +85,8 @@ instance Show Maze where
   show = genericShow
 
 data MazeItem = Maze_Wall | Maze_Floor
+
+derive instance Eq MazeItem
 
 
 derive instance Generic MazeItem _

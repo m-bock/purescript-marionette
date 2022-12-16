@@ -23,6 +23,8 @@ type Vec = Vector Int
 
 data Grid a = UnsafeGrid (Vector Int) (Map Vec a)
 
+derive instance (Eq a) => Eq (Grid a)
+
 derive instance Functor Grid
 
 instance Show a => Show (Grid a) where

@@ -7,7 +7,7 @@ import Data.String as Str
 import Effect (Effect)
 import Effect.Aff (Milliseconds(..), launchAff_)
 import Effect.Aff as Aff
-import Marionette (Program, defaultProgram)
+import Marionette (Config, Program, defaultConfig, noController, noRenderer)
 import Marionette as Mar
 import Marionette.Renderers.Eventless as Eventless
 import Partial.Unsafe (unsafeCrashWith)
@@ -49,19 +49,27 @@ type Env m =
 --       , direction
 --       }
 
+config :: Config Unit State
+config =
+  defaultConfig
+
 program :: Program Unit State
-program = defaultProgram
-  { initialState = Sta_Init
-  , renderer = Eventless.mkRenderer_ view
-  --, controller = F.mkController_ control
+program =
+  { initialState: Sta_Init
+  , renderer: Eventless.mkRenderer_ view
+  , controller: noController
   }
+
+-- { renderer = Eventless.mkRenderer_ view
+-- --, controller = F.mkController_ control
+-- }
 
 main :: Effect Unit
 main = launchAff_ do
   --let levelSpec = maybe' (\_ -> unsafeCrashWith "wrong config") level
   --game <- initGame env levelSpec
 
-  _ <- Mar.runProgram program
+  _ <- Mar.runProgram program config
   pure unit
 
   where
