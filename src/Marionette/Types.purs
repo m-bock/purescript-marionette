@@ -15,7 +15,7 @@ type SendMsg msg m = (msg -> m Unit)
 newtype Controller msg sta = Controller (SendMsg msg Aff -> State sta Aff -> msg -> Aff Unit)
 
 newtype Renderer msg sta = Renderer
-  { onInit :: Effect Unit
+  { onInit :: Aff Unit
   , onState :: sta -> (msg -> Aff Unit) -> Aff Unit
   , onFinish :: Aff Unit
   }

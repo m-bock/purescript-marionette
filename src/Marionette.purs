@@ -28,6 +28,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, Canceler(..), Error, Fiber, error, launchAff, launchAff_, makeAff)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
+import Effect.Class.Console (log)
 import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
@@ -124,6 +125,7 @@ cleanup { stateRef, threadsRef, programCallback, program } = do
 
 initProgram :: forall msg sta. Eq sta => Env msg sta -> Aff Unit
 initProgram env = do
+  (unwrap env.program.renderer).onInit
   case env.config.initialMsg of
     Just msg -> runFreshThread env msg
     Nothing -> pure unit
@@ -169,8 +171,9 @@ checkExit env msg cont = do
     threads
       # Map.values
       # traverse_ (Aff.killFiber $ error "Cleanup error")
-    liftEffect $ env.programCallback $ Right state
+    log "ss"
     (unwrap env.program.renderer).onFinish
+    liftEffect $ env.programCallback $ Right state
     cont
 
 runProgram :: forall msg sta. Eq sta => Program msg sta -> Config msg sta -> Aff sta

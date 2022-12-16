@@ -13,6 +13,7 @@ data Msg
   | Msg_Pause
   | Msg_Tick
   | Msg_Navigate Direction
+  | Msg_NoOp
 
 data State
   = Sta_Init

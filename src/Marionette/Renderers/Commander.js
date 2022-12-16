@@ -1,5 +1,6 @@
 import * as readline from "readline";
 
+
 export const emitKeypressEvents = () =>
     readline.emitKeypressEvents(process.stdin);
 

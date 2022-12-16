@@ -1,13 +1,15 @@
 module Marionette.Renderers.Commander
   ( KeyInput
-  , KeyboardUserInput
+  , KeyboardUserInput(..)
+  , NativeNodeKey
   , PureCompleter
-  , Surface
+  , Surface(..)
   , TextInput
-  , mkRenderer
   , defaultConfig
   , defaultKeyInput
   , defaultTextInput
+  , mkRenderer
+  , mkRenderer_
   , noSurface
   ) where
 
@@ -25,16 +27,10 @@ import Node.ReadLine as RL
 
 ---
 
-type Surface key msg =
-  { output :: String
-  , input :: KeyboardUserInput key msg
-  }
+data Surface msg = Surface String (KeyboardUserInput msg)
 
-noSurface :: forall msg. Surface String msg
-noSurface =
-  { output: ""
-  , input: NoInput
-  }
+noSurface :: forall msg. Surface msg
+noSurface = Surface "" NoInput
 
 type TextInput =
   { prompt :: String
@@ -54,23 +50,21 @@ defaultKeyInput = { prompt: "" }
 
 type PureCompleter = String -> { completions :: Array String, matched :: String }
 
-data KeyboardUserInput key msg
+data KeyboardUserInput msg
   = TextInput (String -> msg) TextInput
-  | KeyInput (key -> msg) KeyInput
+  | KeyInput (NativeNodeKey -> msg) KeyInput
   | NoInput
 
-type Config key =
-  { keyParser :: NativeNodeKey -> key
-  , clearScreen :: Boolean
+type Config =
+  { clearScreen :: Boolean
   , separator :: Maybe String
   , prompt :: String -> String
   , noPrompt :: String
   }
 
-defaultConfig :: Config NativeNodeKey
+defaultConfig :: Config
 defaultConfig =
-  { keyParser: identity
-  , clearScreen: true
+  { clearScreen: true
   , separator: Nothing
   , noPrompt: "#"
   , prompt: \text -> "> " <>
@@ -85,13 +79,16 @@ type NativeNodeKey =
   , shift :: Boolean
   }
 
-type View key msg sta = sta -> Surface key msg
+type View msg sta = sta -> Surface msg
 
-mkRenderer :: forall key msg sta. Config key -> View key msg sta -> Renderer msg sta
+mkRenderer_ :: forall msg sta. View msg sta -> Renderer msg sta
+mkRenderer_ = mkRenderer defaultConfig
+
+mkRenderer :: forall msg sta. Config -> View msg sta -> Renderer msg sta
 mkRenderer cfg view = Renderer
-  { onInit, onState, onFinish: pure unit }
+  { onInit, onState, onFinish: log eraseScreen }
   where
-  onInit = emitKeypressEvents
+  onInit = liftEffect emitKeypressEvents
 
   onState state onMsg = do
     let surface = view state
@@ -103,7 +100,7 @@ mkRenderer cfg view = Renderer
     Just sep -> log sep
     Nothing -> pure unit
 
-  renderSurface onMsg { output, input } = do
+  renderSurface onMsg (Surface output input) = do
     maybeClear
     renderOutput output
     maybeSeperator
@@ -121,7 +118,7 @@ mkRenderer cfg view = Renderer
     KeyInput mkMsg { prompt } -> do
       log prompt
       key <- getKey
-      let msg = mkMsg $ cfg.keyParser key
+      let msg = mkMsg key
       onMsg msg
 
 ---
