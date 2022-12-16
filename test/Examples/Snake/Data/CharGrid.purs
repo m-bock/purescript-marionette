@@ -1,4 +1,4 @@
-module Test.Examples.Snake.CharGrid where
+module Test.Examples.Snake.Data.CharGrid where
 
 import Prelude
 
@@ -8,8 +8,8 @@ import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.String.Regex (replace) as Reg
 import Data.String.Regex.Flags (noFlags) as Reg
 import Data.String.Regex.Unsafe (unsafeRegex) as Reg
-import Test.Examples.Snake.Grid (Grid)
-import Test.Examples.Snake.Grid as Grid
+import Test.Examples.Snake.Data.Grid (Grid)
+import Test.Examples.Snake.Data.Grid as Grid
 
 type CharGrid = Grid Char
 

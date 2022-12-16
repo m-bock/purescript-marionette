@@ -1,4 +1,4 @@
-module Test.Examples.Snake.Grid
+module Test.Examples.Snake.Data.Grid
   ( Grid
   , findIndex
   , fromArrays
@@ -16,7 +16,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Traversable (class Foldable, class Traversable, foldMap, foldl, foldr, sequence, sequenceDefault, traverse)
 import Data.Tuple (Tuple(..))
-import Test.Examples.Snake.Vector (Vector(..))
+import Test.Examples.Snake.Data.Vector (Vector(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 type Vec = Vector Int
@@ -24,6 +24,9 @@ type Vec = Vector Int
 data Grid a = UnsafeGrid (Vector Int) (Map Vec a)
 
 derive instance Functor Grid
+
+instance Show a => Show (Grid a) where
+  show = toArrays >>> show
 
 instance Foldable Grid where
   foldr f x (UnsafeGrid _ mp) = foldr f x mp

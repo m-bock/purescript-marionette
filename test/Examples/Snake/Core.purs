@@ -29,12 +29,12 @@ import Data.Show.Generic (genericShow)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (unfoldr)
-import Test.Examples.Snake.CharGrid as CharGrid
-import Test.Examples.Snake.Direction (Direction)
-import Test.Examples.Snake.Direction as Dir
-import Test.Examples.Snake.Grid (Grid)
-import Test.Examples.Snake.Grid as Grid
-import Test.Examples.Snake.Vector (Vector)
+import Test.Examples.Snake.Data.CharGrid as CharGrid
+import Test.Examples.Snake.Data.Direction (Direction)
+import Test.Examples.Snake.Data.Direction as Dir
+import Test.Examples.Snake.Data.Grid (Grid)
+import Test.Examples.Snake.Data.Grid as Grid
+import Test.Examples.Snake.Data.Vector (Vector)
 import Unsafe.Coerce (unsafeCoerce)
 
 --- Vec 
@@ -66,9 +66,27 @@ derive instance Newtype Board _
 
 data Snake = Snake Vec (Array Vec)
 
+
+derive instance Generic Snake _
+
+instance Show Snake where
+  show = genericShow
+
 newtype Maze = Maze (Grid MazeItem)
 
+
+derive instance Generic Maze _
+
+instance Show Maze where
+  show = genericShow
+
 data MazeItem = Maze_Wall | Maze_Floor
+
+
+derive instance Generic MazeItem _
+
+instance Show MazeItem where
+  show = genericShow
 
 newtype Goodie = Goodie Vec
 

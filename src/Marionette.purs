@@ -2,24 +2,35 @@ module Marionette where
 
 import Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class.Console (log)
+import Marionette.Types (Renderer(..))
 import Unsafe.Coerce (unsafeCoerce)
 
-
-type ProgramConfig msg sta =
-  { 
+type Program msg sta =
+  { initialState :: sta
+  ,
     -- exitIf :: msg -> sta -> Boolean
-  --, initialMsg :: Maybe msg
+    initialMsg :: Maybe msg
   --, onEvent :: ProgramEvent msg sta -> Effect Unit
-  --, render :: Render msg sta
-  --, control :: Control msg sta
+  , renderer :: Renderer msg sta
+  --, controller :: Control msg sta
   }
 
+noRenderer :: forall msg sta. Renderer msg sta
+noRenderer = Renderer
+  { onInit: pure unit
+  , onState: \_ _ -> pure unit
+  , onFinish: pure unit
+  }
 
-defaultProgramConfig :: forall msg sta. ProgramConfig msg sta
-defaultProgramConfig = {}
+defaultProgram :: Program Unit Unit
+defaultProgram =
+  { renderer: noRenderer
+  , initialState: unit
+  , initialMsg: Nothing
+  }
 
 -- data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
 
@@ -38,9 +49,7 @@ defaultProgramConfig = {}
 --   | EndMsg ThreadSlotId
 --   | NewState ThreadSlotId sta
 
-
-
-runProgram :: forall msg sta. sta -> ProgramConfig msg sta -> Aff sta
-runProgram sta _ = do
+runProgram :: forall msg sta. Program msg sta -> Aff sta
+runProgram cfg = do
   log "hello"
-  pure sta
+  pure cfg.initialState

@@ -1,13 +1,13 @@
-module Marionette.RenderEngines.Commander
-  ( KeyInputConfig
+module Marionette.Renderers.Commander
+  ( KeyInput
   , KeyboardUserInput
   , PureCompleter
   , Surface
-  , TextInputConfig
-  , commanderRenderEngine
+  , TextInput
+  , mkRenderer
   , defaultConfig
-  , defaultKeyInputConfig
-  , defaultTextInputConfig
+  , defaultKeyInput
+  , defaultTextInput
   , noSurface
   ) where
 
@@ -20,7 +20,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
-import Marionette.Types (RenderEngine)
+import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
 
 ---
@@ -36,27 +36,27 @@ noSurface =
   , input: NoInput
   }
 
-type TextInputConfig =
+type TextInput =
   { prompt :: String
   , completions :: PureCompleter
   }
 
-defaultTextInputConfig :: TextInputConfig
-defaultTextInputConfig = { prompt: "", completions: noCompletion }
+defaultTextInput :: TextInput
+defaultTextInput = { prompt: "", completions: noCompletion }
 
 noCompletion :: PureCompleter
 noCompletion s = { completions: [], matched: s }
 
-type KeyInputConfig = { prompt :: String }
+type KeyInput = { prompt :: String }
 
-defaultKeyInputConfig :: KeyInputConfig
-defaultKeyInputConfig = { prompt: "" }
+defaultKeyInput :: KeyInput
+defaultKeyInput = { prompt: "" }
 
 type PureCompleter = String -> { completions :: Array String, matched :: String }
 
 data KeyboardUserInput key msg
-  = TextInput (String -> msg) TextInputConfig
-  | KeyInput (key -> msg) KeyInputConfig
+  = TextInput (String -> msg) TextInput
+  | KeyInput (key -> msg) KeyInput
   | NoInput
 
 type Config key =
@@ -87,8 +87,8 @@ type NativeNodeKey =
 
 type View key msg sta = sta -> Surface key msg
 
-commanderRenderEngine :: forall key msg sta. Config key -> View key msg sta -> RenderEngine msg sta
-commanderRenderEngine cfg view =
+mkRenderer :: forall key msg sta. Config key -> View key msg sta -> Renderer msg sta
+mkRenderer cfg view = Renderer
   { onInit, onState, onFinish: pure unit }
   where
   onInit = emitKeypressEvents

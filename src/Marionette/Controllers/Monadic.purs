@@ -1,6 +1,6 @@
-module Marionett.ControlHandlers.Monadic
+module Marionett.Controllers.Monadic
   ( MarionetteT
-  , monadicControlHandler
+  , mkController
   , sendMsg
   ) where
 
@@ -10,9 +10,9 @@ import Control.Monad.Reader (class MonadTrans, ReaderT(..), ask, lift, runReader
 import Control.Monad.State (class MonadState)
 import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
-import Marionette.Types (ControlHandler, State, SendMsg)
+import Marionette.Types (Controller(..), SendMsg, State)
 
-type MonadicControlHandler msg sta m = msg -> MarionetteT msg sta m (Maybe msg)
+type Control msg sta m = msg -> MarionetteT msg sta m (Maybe msg)
 
 ---
 
@@ -21,9 +21,13 @@ newtype MarionetteT msg sta (m :: Type -> Type) a = MarionetteT (ReaderT (Marion
 newtype MarionetteEnv msg sta (m :: Type -> Type) = MarionetteEnv { state :: State sta m, sendMsg :: SendMsg msg m }
 
 derive newtype instance Monad m => Monad (MarionetteT msg sta m)
+
 derive newtype instance Bind m => Bind (MarionetteT msg sta m)
+
 derive newtype instance Apply m => Apply (MarionetteT msg sta m)
+
 derive newtype instance Applicative m => Applicative (MarionetteT msg sta m)
+
 derive newtype instance Functor m => Functor (MarionetteT msg sta m)
 
 instance MonadTrans (MarionetteT msg sta)
@@ -43,8 +47,8 @@ sendMsg msg = MarionetteT do
   MarionetteEnv env <- ask
   lift $ env.sendMsg msg
 
-monadicControlHandler :: forall msg sta. MonadicControlHandler msg sta Aff -> ControlHandler msg sta
-monadicControlHandler mc sendMsg_ state msg = runMarionetteT sendMsg_ state $ mc msg
+mkController :: forall msg sta. Control msg sta Aff -> Controller msg sta
+mkController mc = Controller \sendMsg_ state msg -> runMarionetteT sendMsg_ state $ mc msg
 
 class MonadSendMsg msg m where
   sendMsg' :: msg -> m Unit

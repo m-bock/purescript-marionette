@@ -11,9 +11,9 @@ type State s m = forall a. (s -> (Tuple a s)) -> m a
 
 type SendMsg msg m = (msg -> m Unit)
 
-type ControlHandler msg sta = SendMsg msg Aff  -> State sta Aff -> msg -> Aff (Maybe msg)
+newtype Controller msg sta = Controller (SendMsg msg Aff -> State sta Aff -> msg -> Aff (Maybe msg))
 
-type RenderEngine msg sta =
+newtype Renderer msg sta = Renderer
   { onInit :: Effect Unit
   , onState :: sta -> (msg -> Aff Unit) -> Aff Unit
   , onFinish :: Aff Unit
