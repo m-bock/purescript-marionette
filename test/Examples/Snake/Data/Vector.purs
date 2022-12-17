@@ -9,6 +9,7 @@ module Test.Examples.Snake.Data.Vector
 import Prelude
 
 import Control.Apply (lift2)
+import Data.Foldable (class Foldable, foldMapDefaultR, foldlDefault)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 
@@ -41,6 +42,11 @@ instance Applicative Vector where
 
 instance Apply Vector where
   apply (Vec f g) (Vec x y) = Vec (f x) (g y)
+
+instance Foldable Vector where
+  foldr f z (Vec x y) = f y $ f x z
+  foldl f z (Vec x y) = f (f z x) y
+  foldMap = foldMapDefaultR
 
 one_y :: forall a. Semiring a => Vector a
 one_y = Vec zero one

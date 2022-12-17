@@ -1,7 +1,7 @@
 module Test.Examples.Snake.Core
   ( Board(..)
   , Goodie(..)
-  , LevelSpec(..)
+  , LevelSpec
   , Maze(..)
   , MazeItem(..)
   , Snake(..)
@@ -29,10 +29,12 @@ import Data.Foldable (foldM)
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Maybe.First (First(..))
+import Data.Monoid (guard)
 import Data.Newtype (class Newtype, over, un)
 import Data.Show.Generic (genericShow)
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst, snd)
 import Data.Unfoldable (unfoldr)
 import Test.Examples.Snake.Data.CharGrid as CharGrid
 import Test.Examples.Snake.Data.Direction (Direction)
@@ -173,7 +175,7 @@ applyGoodie (Goodie goodie) (Board board) = board
 
 findSnake :: Board -> Maybe Snake
 findSnake (Board grid) = ado
-  snakeHead <- Grid.findIndex (_ == Tile_SnakeHead) grid
+  snakeHead <- Grid.findEntry (snd >>> (_ == Tile_SnakeHead)) grid <#> fst  
   let snakeTail = unfoldr next snakeHead
   in Snake snakeHead snakeTail
   where
@@ -185,7 +187,7 @@ findSnake (Board grid) = ado
 
 findSnakeDirection :: Board -> Maybe Direction
 findSnakeDirection (Board grid) = do
-  snakeHead <- Grid.findIndex (_ == Tile_SnakeHead) grid
+  snakeHead <- Grid.findEntry (snd >>> (_ == Tile_SnakeHead)) grid <#> fst
   dir <- Dir.directionsClockwise #
     Arr.find \dir -> Grid.lookup (snakeHead + Dir.toVector dir) grid == Just Tile_SnakeBody
   pure $ dir

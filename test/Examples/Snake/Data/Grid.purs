@@ -1,12 +1,14 @@
 module Test.Examples.Snake.Data.Grid
   ( Grid
-  , findIndex
+  , findEntry
   , fromArrays
   , insert
   , lookup
   , toArrays
   , toMap
-  ) where
+  , toUnfoldable
+  )
+  where
 
 import Prelude
 
@@ -14,8 +16,10 @@ import Data.Array as Arr
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Traversable (class Foldable, class Traversable, foldMap, foldl, foldr, sequence, sequenceDefault, traverse)
+import Data.Traversable (class Foldable, class Traversable, all, foldMap, foldl, foldr, sequence, sequenceDefault, traverse)
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested (type (/\))
+import Data.Unfoldable (class Unfoldable)
 import Test.Examples.Snake.Data.Vector (Vector(..))
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -39,6 +43,12 @@ instance Traversable Grid where
   traverse f (UnsafeGrid size mp) = UnsafeGrid size <$> traverse f mp
   sequence = sequenceDefault
 
+findEntry :: forall a. ((Vec /\ a) -> Boolean) -> Grid a -> Maybe (Vec /\ a)
+findEntry f grid = toUnfoldable grid # Arr.find f
+
+toUnfoldable :: forall a f. Unfoldable f => Grid a -> f (Vec /\ a)
+toUnfoldable (UnsafeGrid _ mp) = Map.toUnfoldable mp
+
 toMap :: forall a. Grid a -> Map Vec a
 toMap (UnsafeGrid _ mp) = mp
 
@@ -46,7 +56,7 @@ lookup :: forall a. Vec -> Grid a -> Maybe a
 lookup vec (UnsafeGrid _ mp) = Map.lookup vec mp
 
 insert :: forall a. Vec -> a -> Grid a -> Maybe (Grid a)
-insert vec x (UnsafeGrid size mp) | vec < size =
+insert vec x (UnsafeGrid size mp) | all (_ == LT) $ compare <$> vec <*> size =
   Just $ UnsafeGrid size $ Map.insert vec x mp
 insert _ _ _ = Nothing
 
@@ -57,9 +67,6 @@ fromArrays xs = do
   where
   pos = positionsInSize size
   size = guessSize xs
-
-findIndex :: forall a. (a -> Boolean) -> Grid a -> Maybe Vec
-findIndex = unsafeCoerce 1
 
 index :: forall a. Int -> Array a -> Maybe a
 index = flip Arr.index
