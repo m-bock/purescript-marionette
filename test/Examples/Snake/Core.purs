@@ -1,7 +1,7 @@
 module Test.Examples.Snake.Core
   ( Board(..)
   , Goodie(..)
-  , LevelSpec
+  , LevelSpec(..)
   , Maze(..)
   , MazeItem(..)
   , Snake(..)
@@ -16,15 +16,14 @@ module Test.Examples.Snake.Core
   , mkBoard
   , parseLevelSpec
   , printBoard
-  )
-  where
+  ) where
 
 import Prelude
 
 import Data.Array as Arr
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NEA
-import Data.Either (Either(..), note)
+import Data.Either (Either(..), hush, note)
 import Data.Foldable (foldM)
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
@@ -175,7 +174,7 @@ applyGoodie (Goodie goodie) (Board board) = board
 
 findSnake :: Board -> Maybe Snake
 findSnake (Board grid) = ado
-  snakeHead <- Grid.findEntry (snd >>> (_ == Tile_SnakeHead)) grid <#> fst  
+  snakeHead <- Grid.findEntry (snd >>> (_ == Tile_SnakeHead)) grid <#> fst
   let snakeTail = unfoldr next snakeHead
   in Snake snakeHead snakeTail
   where
@@ -209,7 +208,7 @@ parseChar = case _ of
 
 parseBoard :: String -> Either String Board
 parseBoard str = do
-  charBoard <- note "E1" $ CharGrid.fromString str
+  charBoard <- note "E1" $ hush $ CharGrid.fromString str
   board <- traverse parseChar charBoard
   pure $ Board board
 

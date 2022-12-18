@@ -16,13 +16,13 @@ import Marionette as Mar
 import Marionette.Renderers.Commander as Commander
 import Marionette.Renderers.Eventless as Eventless
 import Partial.Unsafe (unsafeCrashWith)
-import Test.Examples.Snake.Control (Env, control)
+import Test.Examples.Snake.MVC.Control (Env, control)
 import Test.Examples.Snake.Core (LevelSpec(..), Maze(..), Snake(..))
 import Test.Examples.Snake.Core as Core
 import Test.Examples.Snake.Data.Direction (Direction)
 import Test.Examples.Snake.Data.Vector (Vector)
-import Test.Examples.Snake.Model (Msg, State(..))
-import Test.Examples.Snake.View (view)
+import Test.Examples.Snake.MVC.Model (Msg, State(..))
+import Test.Examples.Snake.MVC.View (view)
 import Unsafe.Coerce (unsafeCoerce)
 
 -- initGame :: forall m. Monad m => Env m -> LevelSpec -> m Game
@@ -39,7 +39,7 @@ import Unsafe.Coerce (unsafeCoerce)
 env :: Env Aff
 env =
   { delay: Aff.delay
-  , randomInt: \x1 x2 -> liftEffect $ randomInt x1 x2
+  , randomInt: liftEffect $ randomInt 0 1000 -- bottom top
   }
 
 config :: Config Msg State

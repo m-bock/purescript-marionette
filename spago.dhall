@@ -3,6 +3,7 @@
   [ "aff"
   , "aff-promise"
   , "arrays"
+  , "bifunctors"
   , "console"
   , "datetime"
   , "debug"
