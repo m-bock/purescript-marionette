@@ -34,7 +34,9 @@ view = case _ of
           case _ of
             Tile_Wall -> '#'
             Tile_Floor -> ' '
-            _ -> '?'
+            Tile_Goodie -> 'x'
+            Tile_SnakeHead -> '+'
+            Tile_SnakeBody -> 'O'
         # CharGrid.toString
     )
     NoInput

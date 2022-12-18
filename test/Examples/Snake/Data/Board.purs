@@ -13,24 +13,19 @@ module Test.Examples.Snake.Data.Board
 
 import Prelude
 
-import Control.Monad.Except (ExceptT)
-import Control.Monad.Reader (ReaderT)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Enum (class BoundedEnum, enumFromTo)
 import Data.Generic.Rep (class Generic)
-import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
-import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
+import Data.Traversable (foldr, traverse)
 import Test.Examples.Snake.Data.CharGrid as CharGrid
 import Test.Examples.Snake.Data.Direction (Direction)
-import Test.Examples.Snake.Data.Grid (ErrorFromArrays, Grid)
+import Test.Examples.Snake.Data.Grid (ErrorFromArrays, Grid, Vec)
 import Test.Examples.Snake.Data.Grid as Grid
 import Test.Examples.Snake.Data.Vector (Vector(..))
 import Test.Examples.Snake.GridParser (GridParseError, GridParser)
-import Test.Examples.Snake.GridParser as GridParser
+import Test.Examples.Snake.GridParser as GP
 import Unsafe.Coerce (unsafeCoerce)
 
 data Tile
@@ -40,7 +35,9 @@ data Tile
   | Tile_Wall
   | Tile_Floor
 
-data MazeTile = MazeTile_Floor | MazeTile_Wall
+data MazeTile
+  = MazeTile_Floor
+  | MazeTile_Wall
 
 data Board = UnsafeBoard Board'
 
@@ -53,9 +50,9 @@ type Board' =
 unBoard :: Board -> Board'
 unBoard (UnsafeBoard x) = x
 
-data Snake = Snake
-data Goodie = Goodie
-data Maze = Maze
+data Snake = Snake Vec Vec (Array Vec)
+data Goodie = Goodie Vec
+newtype Maze = Maze (Grid MazeTile)
 
 instance Show Board where
   show (UnsafeBoard i) = "board:" -- <> show i
@@ -63,6 +60,7 @@ instance Show Board where
 derive instance Eq Board
 derive instance Eq Goodie
 derive instance Eq Maze
+derive instance Eq MazeTile
 derive instance Eq Snake
 
 --- Parser
@@ -79,12 +77,11 @@ derive instance Generic ParseError _
 instance Show ParseError where
   show = genericShow
 
-
 parse :: String -> Either ParseError Board
 parse str = do
   charBoard <- lmap ErrFromArrays $ CharGrid.fromString str
   tileBoard <- traverse parseChar charBoard
-  lmap ErrGridPArse $ GridParser.runParser tileBoard parseBoard
+  lmap ErrGridPArse $ GP.runParser tileBoard parseBoard
 
 parseBoard :: GridParser Tile Board
 parseBoard = ado
@@ -95,29 +92,41 @@ parseBoard = ado
   in UnsafeBoard { maze, snake, goodie }
 
 parseMaze :: GridParser Tile Maze
-parseMaze = pure Maze
+parseMaze = Maze <$> GP.scanGrid MazeTile_Floor \_ -> case _ of
+  Tile_Wall -> Just MazeTile_Wall
+  _ -> Nothing
 
 parseSnake :: GridParser Tile Snake
-parseSnake = pure Snake
+parseSnake = ado
+  --GP.setDirection Dir.Right
+
+  GP.moveTo (\_ -> (_ == Tile_SnakeHead))
+  h <- GP.position <* GP.any
+  n <- GP.position <* GP.satisfies (\_ -> (_ == Tile_SnakeBody))
+  b1 <- GP.position <* GP.satisfies (\_ -> (_ == Tile_SnakeBody))
+  b2 <- GP.position <* GP.satisfies (\_ -> (_ == Tile_SnakeBody))
+  b3 <- GP.position <* GP.satisfies (\_ -> (_ == Tile_SnakeBody))
+  in Snake h n [ b1, b2, b3 ]
 
 parseRest :: GridParser Tile Unit
-parseRest = pure unit
+parseRest = void $ GP.scanGrid unit \_ -> case _ of
+  Tile_Wall -> Just unit
+  _ -> Nothing
 
 parseGoodie :: GridParser Tile Goodie
-parseGoodie = pure Goodie
+parseGoodie = ado
+  GP.moveTo (\_ -> (_ == Tile_Goodie))
+  g <- GP.position <* GP.any
+  in Goodie g
 
 parseChar :: Char -> Either ParseError Tile
 parseChar = case _ of
   '#' -> Right Tile_Wall
   'O' -> Right Tile_SnakeBody
   '+' -> Right Tile_SnakeHead
+  'x' -> Right Tile_Goodie
   ' ' -> Right Tile_Floor
   c -> Left $ ErrInvalidChar c
-
--- findSnake :: Grid Tile -> Maybe Snake
--- findSnake grid = grid
---   # Grid.toUnfoldable
---   # Arr.filter (\(Tuple k v) -> v == Tile_SnakeHead )
 
 --- Printer
 
@@ -126,16 +135,26 @@ type GridPrinter b a = a -> Grid b -> Grid b
 type GridPrinter_ b a = a -> Grid b
 
 printBoard :: GridPrinter_ Tile Board
-printBoard _ = Grid.empty
+printBoard = unBoard >>> \{ maze, goodie, snake } ->
+  printMaze maze
+    # printGoodie goodie
+    # printSnake snake
 
 printMaze :: GridPrinter_ Tile Maze
-printMaze _ = Grid.empty
+printMaze (Maze grid) = grid <#> case _ of
+  MazeTile_Wall -> Tile_Wall
+  MazeTile_Floor -> Tile_Floor
 
 printSnake :: GridPrinter Tile Snake
-printSnake _ = identity
+printSnake (Snake head neck tail) grid = grid
+  # Grid.insert' head Tile_SnakeHead
+  # Grid.insert' neck Tile_SnakeBody
+  # \g -> foldr (\pos -> Grid.insert' pos Tile_SnakeBody) g tail
 
-printGoodie :: GridPrinter Goodie Snake
-printGoodie _ = identity
+printGoodie :: GridPrinter Tile Goodie
+printGoodie (Goodie pos) grid = grid
+  # Grid.insert pos Tile_Goodie
+  # fromMaybe grid
 
 ---
 
@@ -154,7 +173,7 @@ next _ (UnsafeBoard n) = Just $ UnsafeBoard (n)
 -- getFreeSpots = unsafeCoerce 1
 
 setDirection :: Direction -> Board -> Maybe Board
-setDirection = unsafeCoerce 1
+setDirection _ = unsafeCoerce 1
 
 ---
 
@@ -194,3 +213,32 @@ instance Show Tile where
 
 -- g :: String -> Maybe ABC
 -- g k = Map.lookup k x
+
+x
+  :: forall a188 b189
+   . { direction :: b189 -> Either a188 b189
+     , grid ::
+         { entries :: Array (Array (Maybe Tile))
+         , size :: Vector Int
+         }
+     , position :: Vector Int
+     }
+x =
+  { direction: Right
+  , grid:
+      { entries:
+          [ [ (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall) ]
+          , [ (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing ]
+          , [ (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing ]
+          , [ (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall) ]
+          , [ (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall), (Just Tile_Wall) ]
+          ]
+      , size: (Vec 20 10)
+      }
+  , position: (Vec 0 0)
+  }

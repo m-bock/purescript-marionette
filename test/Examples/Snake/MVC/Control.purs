@@ -29,19 +29,34 @@ type Env m =
   , randomInt :: m Int
   }
 
+-- eitherBoard :: Either ParseError Board
+-- eitherBoard = Board.parse $ Str.joinWith "\n"
+--   [ "############    ####"
+--   , "#                  #"
+--   , "   +OO             #"
+--   , "                   #"
+--   , "          x        #"
+--   , "#                  #"
+--   , "#                   "
+--   , "#                   "
+--   , "#                  #"
+--   , "####      ##########"
+--   ]
+
 eitherBoard :: Either ParseError Board
 eitherBoard = Board.parse $ Str.joinWith "\n"
   [ "############    ####"
   , "#                  #"
-  , "     OOOO+         #"
+  , "  +OOOO            #"
   , "                   #"
-  , "                   #"
+  , "    x              #"
   , "#                  #"
   , "#                   "
   , "#                   "
   , "#                  #"
   , "####      ##########"
   ]
+
 
 data AppError = Err1 | Err2
 

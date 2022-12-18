@@ -8,6 +8,7 @@ module Test.Examples.Snake.Data.Grid
   , fromArray
   , fromArrays
   , insert
+  , insert'
   , insertSubgrid
   , insertSubgridCropped
   , isInSize
@@ -16,20 +17,22 @@ module Test.Examples.Snake.Data.Grid
   , toArrays
   , toMap
   , toUnfoldable
-  )
-  where
+  ) where
 
 import Prelude
 
-import Data.Array (foldM, mapWithIndex)
+import Data.Array (foldM)
 import Data.Array as Arr
 import Data.Either (Either, note)
+import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndexDefaultL, foldlWithIndex, foldrWithIndex)
+import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
 import Data.Show.Generic (genericShow)
 import Data.Traversable (class Foldable, class Traversable, all, foldMap, foldl, foldr, sequence, sequenceDefault, traverse)
+import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested (type (/\))
 import Data.Unfoldable (class Unfoldable)
@@ -46,6 +49,9 @@ derive instance (Eq a) => Eq (Grid a)
 
 derive instance Functor Grid
 
+instance FunctorWithIndex Vec Grid where
+  mapWithIndex f (UnsafeGrid size mp) = UnsafeGrid size $ mapWithIndex f mp
+
 instance Show a => Show (Grid a) where
   show grid = show { size: size grid, entries: toArrays grid }
 
@@ -54,16 +60,23 @@ instance Foldable Grid where
   foldl f x (UnsafeGrid _ mp) = foldl f x mp
   foldMap f (UnsafeGrid _ mp) = foldMap f mp
 
+instance FoldableWithIndex Vec Grid where
+  foldrWithIndex f x (UnsafeGrid size mp) = foldrWithIndex f x mp
+  foldlWithIndex f x (UnsafeGrid size mp) = foldlWithIndex f x mp
+  foldMapWithIndex = foldMapWithIndexDefaultL
+
 instance Traversable Grid where
   traverse f (UnsafeGrid size mp) = UnsafeGrid size <$> traverse f mp
   sequence = sequenceDefault
+
+instance TraversableWithIndex Vec Grid where
+  traverseWithIndex f (UnsafeGrid size mp) = UnsafeGrid size <$> traverseWithIndex f mp
 
 findEntry :: forall a. ((Vec /\ a) -> Boolean) -> Grid a -> Maybe (Vec /\ a)
 findEntry f grid = toUnfoldable grid # Arr.find f
 
 empty :: forall a. Grid a
 empty = UnsafeGrid zero Map.empty
-
 
 fill :: forall a. (Vec -> a) -> Vec -> Grid a -- TODO handle minus
 fill f size = positionsInSize size
@@ -90,6 +103,9 @@ insert :: forall a. Vec -> a -> Grid a -> Maybe (Grid a)
 insert vec x (UnsafeGrid size mp) | isInSize vec size =
   Just $ UnsafeGrid size $ Map.insert vec x mp
 insert _ _ _ = Nothing
+
+insert' :: forall a. Vec -> a -> Grid a -> Grid a
+insert' x1 x2 grid = insert x1 x2 grid # fromMaybe grid
 
 isInSize :: Vec -> Vec -> Boolean
 isInSize vec size =
@@ -151,9 +167,7 @@ guessSize xs = Vec x y
   x = Arr.length <<< fromMaybe [] <<< Arr.head $ xs
   y = Arr.length xs
 
-
 ---
-
 
 derive instance Eq ErrorFromArrays
 
