@@ -1,0 +1,1 @@
+- Check if `promptAff` is blocking
