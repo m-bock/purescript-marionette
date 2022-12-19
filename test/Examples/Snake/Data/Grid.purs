@@ -2,6 +2,7 @@ module Test.Examples.Snake.Data.Grid
   ( ErrorFromArrays(..)
   , Grid
   , Vec
+  , coords
   , empty
   , fill
   , findEntry
@@ -13,11 +14,13 @@ module Test.Examples.Snake.Data.Grid
   , insertSubgridCropped
   , isInSize
   , lookup
+  , moduloLookup
   , size
   , toArrays
   , toMap
   , toUnfoldable
-  ) where
+  )
+  where
 
 import Prelude
 
@@ -30,6 +33,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
+import Data.Set (Set)
 import Data.Show.Generic (genericShow)
 import Data.Traversable (class Foldable, class Traversable, all, foldMap, foldl, foldr, sequence, sequenceDefault, traverse)
 import Data.TraversableWithIndex (class TraversableWithIndex, traverseWithIndex)
@@ -90,6 +94,9 @@ positionsInSize (Vec w h) = ado
   y <- Arr.range 0 (h - 1)
   in Vec x y
 
+coords :: forall a. Grid a -> Set Vec
+coords (UnsafeGrid _ mp) = Map.keys mp
+
 toUnfoldable :: forall a f. Unfoldable f => Grid a -> f (Vec /\ a)
 toUnfoldable (UnsafeGrid _ mp) = Map.toUnfoldable mp
 
@@ -98,6 +105,12 @@ toMap (UnsafeGrid _ mp) = mp
 
 lookup :: forall a. Vec -> Grid a -> Maybe a
 lookup vec (UnsafeGrid _ mp) = Map.lookup vec mp
+
+moduloLookup :: forall a. Vec -> Grid a -> a
+moduloLookup vec grid = lookup vecSafe grid
+  # fromMaybe' (\_ -> unsafeCrashWith "Modulo lookup")
+  where
+  vecSafe = mod <$> vec <*> size grid
 
 insert :: forall a. Vec -> a -> Grid a -> Maybe (Grid a)
 insert vec x (UnsafeGrid size mp) | isInSize vec size =

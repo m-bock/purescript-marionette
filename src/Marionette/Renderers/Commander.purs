@@ -2,6 +2,7 @@ module Marionette.Renderers.Commander
   ( KeyInput
   , KeyboardUserInput(..)
   , NativeNodeKey
+  , Output(..)
   , PureCompleter
   , Surface(..)
   , TextInput
@@ -15,21 +16,21 @@ module Marionette.Renderers.Commander
 
 import Prelude
 
-import Control.Promise (Promise, toAffE)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Debug (spy)
 import Effect (Effect)
-import Effect.Aff (Aff, makeAff, nonCanceler)
+import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
 
-data Surface msg = Surface String (KeyboardUserInput msg)
+data Surface msg = Surface Output (KeyboardUserInput msg)
+
+newtype Output = TextOutput String
 
 noSurface :: forall msg. Surface msg
-noSurface = Surface "" NoInput
+noSurface = Surface (TextOutput "") NoInput
 
 type TextInput =
   { prompt :: String
@@ -105,22 +106,24 @@ mkRenderer view cfg = Renderer
     maybeSeperator
     renderInput onMsg input
 
-  renderOutput = log
+  renderOutput (TextOutput txt) = log txt
 
   renderInput onMsg = case _ of
     NoInput -> log cfg.noPrompt
+
     TextInput mkMsg { prompt, completions } -> do
       log prompt
       answer <- getAnswer completions
       case mkMsg answer of
         Just msg -> onMsg msg
         Nothing -> pure unit
+
     KeyInput mkMsg { prompt } -> do
       log $ cfg.prompt prompt
-      key <- getKey
-      case mkMsg key of
-        Just msg -> onMsg msg
-        Nothing -> pure unit
+      liftEffect $ getKey \key ->
+        case mkMsg key of
+          Just msg -> launchAff_ $ onMsg msg
+          Nothing -> pure unit
 
   onFinish = log eraseScreen
 
@@ -129,7 +132,7 @@ mkRenderer view cfg = Renderer
 eraseScreen :: String
 eraseScreen = "\x1b" <> "[2J"
 
-foreign import getKeyImpl :: Effect (Promise NativeNodeKey)
+foreign import getKey :: (NativeNodeKey -> Effect Unit) -> Effect Unit
 
 foreign import emitKeypressEvents :: Effect Unit
 
@@ -146,6 +149,3 @@ promptAff interface = makeAff \handler -> do
   RL.setLineHandler (handler <<< Right) interface
   RL.prompt interface
   pure nonCanceler
-
-getKey :: Aff NativeNodeKey
-getKey = toAffE getKeyImpl

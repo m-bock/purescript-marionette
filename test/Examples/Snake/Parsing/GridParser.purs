@@ -1,4 +1,4 @@
-module Test.Examples.Snake.GridParser
+module Test.Examples.Snake.Parsing.GridParser
   ( GridParseError(..)
   , GridParser
   , any
@@ -7,7 +7,6 @@ module Test.Examples.Snake.GridParser
   , runParser
   , satisfies
   , scanGrid
-  , scanGrid'
   , setDirection
   ) where
 
@@ -78,9 +77,6 @@ derive instance Generic GridParseError _
 instance Show GridParseError where
   show = genericShow
 
-scanGrid' :: forall b a z. z -> (z -> Vec -> b -> Maybe z) -> GridParser b z
-scanGrid' = unsafeCoerce 1
-
 scanGrid :: forall b a. a -> (Vec -> b -> Maybe a) -> GridParser b (Grid a)
 scanGrid init f = GridParser \ctx ->
   let
@@ -102,23 +98,8 @@ scanGrid init f = GridParser \ctx ->
         modify_ (\g -> Grid.insert k x g # fromMaybe g)
         pure Nothing
 
-f :: forall b a z. a -> (z -> Vec -> b -> Maybe a) -> GridParser b z
-f = unsafeCoerce 1
-
 setDirection :: forall b a. Direction -> GridParser b a
 setDirection = unsafeCoerce 1
-
--- moveTo :: forall b a. Vec -> GridParser b a
--- moveTo = unsafeCoerce 1
-
--- move :: forall b a. GridParser b a -> GridParser b a
--- move = unsafeCoerce 1
-
--- read :: forall b. GridParser b (Tuple Vec b)
--- read = unsafeCoerce 1
-
--- move :: forall b. GridParser b b
--- move = unsafeCoerce 1
 
 satisfies :: forall b. (Vec -> b -> Boolean) -> GridParser b b
 satisfies f = GridParser \ctx ->
@@ -135,9 +116,6 @@ satisfies f = GridParser \ctx ->
 
 any :: forall b. GridParser b b
 any = satisfies (\_ _ -> true)
-
-fail :: forall b a. GridParseError -> GridParser b a
-fail _ = unsafeCoerce 1
 
 moveTo :: forall b. (Vec -> b -> Boolean) -> GridParser b Unit
 moveTo f = GridParser \ctx ->

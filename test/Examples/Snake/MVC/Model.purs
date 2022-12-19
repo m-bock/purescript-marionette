@@ -4,10 +4,8 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
-import Test.Examples.Snake.Core (Goodie(..), Maze(..), Snake(..))
-import Test.Examples.Snake.Data.Board (Board)
+import Test.Examples.Snake.Board (Board)
 import Test.Examples.Snake.Data.Direction (Direction)
-import Test.Examples.Snake.Data.Vector (Vector)
 
 data Msg
   = Msg_Start
@@ -17,50 +15,53 @@ data Msg
   | Msg_Navigate Direction
 
 data State
-  = Sta_Init
-  | Sta_Playing Game
-  | Sta_Paused Game
-  | Sta_Lost Score
-  | Sta_Won Score
-  | Sta_Error StateError
+  = State_Init
+  | State_Playing Game
+  | State_Paused Game
+  | State_Lost Score
+  | State_Won Score
+  | State_Error StateError
 
 data StateError = ErrBoardParse String
-
-derive instance Eq StateError
-
-derive instance Generic StateError _
-
-instance Show StateError where
-  show = genericShow
-
-derive instance Generic State _
-
-derive instance Eq State
-
-instance Show State where
-  show = genericShow
 
 newtype Game = Game
   { score :: Score
   , board :: Board
   }
 
+newtype Score = Score Int
+
+---
+
 derive instance Generic Game _
 
+derive instance Generic Score _
+
+derive instance Generic StateError _
+
+derive instance Generic State _
+
 derive instance Eq Game
+
+derive instance Eq Score
+
+derive instance Eq StateError
+
+derive instance Eq State
+
+derive instance Ord Score
 
 instance Show Game where
   show = genericShow
 
-newtype Score = Score Int
+instance Show Score where
+  show = genericShow
+
+instance Show StateError where
+  show = genericShow
+
+instance Show State where
+  show = genericShow
 
 derive newtype instance Semiring Score
 
-derive instance Generic Score _
-
-derive instance Eq Score
-
-derive instance Ord Score
-
-instance Show Score where
-  show = genericShow
