@@ -29,31 +29,12 @@ data Surface msg = Surface Output (KeyboardUserInput msg)
 
 newtype Output = TextOutput String
 
-noSurface :: forall msg. Surface msg
-noSurface = Surface (TextOutput "") NoInput
-
-type TextInput =
-  { prompt :: String
-  , completions :: PureCompleter
-  }
-
-defaultTextInput :: TextInput
-defaultTextInput = { prompt: "", completions: noCompletion }
-
-noCompletion :: PureCompleter
-noCompletion s = { completions: [], matched: s }
-
-type KeyInput = { prompt :: String }
-
-defaultKeyInput :: KeyInput
-defaultKeyInput = { prompt: "" }
-
-type PureCompleter = String -> { completions :: Array String, matched :: String }
-
 data KeyboardUserInput msg
   = TextInput (String -> Maybe msg) TextInput
   | KeyInput (NativeNodeKey -> Maybe msg) KeyInput
   | NoInput
+
+type PureCompleter = String -> { completions :: Array String, matched :: String }
 
 type Config =
   { clearScreen :: Boolean
@@ -62,13 +43,11 @@ type Config =
   , noPrompt :: String
   }
 
-defaultConfig :: Config
-defaultConfig =
-  { clearScreen: true
-  , separator: Nothing
-  , noPrompt: "#"
-  , prompt: \text -> "> " <>
-      if text == "" then "" else text <> " :"
+type KeyInput = { prompt :: String }
+
+type TextInput =
+  { prompt :: String
+  , completions :: PureCompleter
   }
 
 type NativeNodeKey =
@@ -80,6 +59,29 @@ type NativeNodeKey =
   }
 
 type View msg sta = sta -> Surface msg
+
+---
+
+noSurface :: forall msg. Surface msg
+noSurface = Surface (TextOutput "") NoInput
+
+defaultTextInput :: TextInput
+defaultTextInput = { prompt: "", completions: noCompletion }
+
+noCompletion :: PureCompleter
+noCompletion s = { completions: [], matched: s }
+
+defaultKeyInput :: KeyInput
+defaultKeyInput = { prompt: "" }
+
+defaultConfig :: Config
+defaultConfig =
+  { clearScreen: true
+  , separator: Nothing
+  , noPrompt: "#"
+  , prompt: \text -> "> " <>
+      if text == "" then "" else text <> " :"
+  }
 
 mkRenderer_ :: forall msg sta. View msg sta -> Renderer msg sta
 mkRenderer_ view = mkRenderer view defaultConfig

@@ -23,12 +23,10 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
-import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (Aff, Canceler(..), Error, Fiber, error, launchAff, launchAff_, makeAff)
 import Effect.Aff as Aff
 import Effect.Class (liftEffect)
-import Effect.Class.Console (log)
 import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
@@ -48,16 +46,50 @@ type Config msg sta =
 
 newtype ThreadId = ThreadId Int
 
+type Env msg sta =
+  { stateRef :: Ref sta
+  , nextThreadIdRef :: Ref ThreadId
+  , threadsRef :: Ref (Map ThreadId (Fiber Unit))
+  , programCallback :: Either Error sta -> Effect Unit
+  , program :: Program msg sta
+  , config :: Config msg sta
+  }
+
+data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
+
+data EventType msg sta
+  = NewMsg ThreadId msg
+  | EndMsg ThreadId
+  | NewState ThreadId sta
+
+---
+
 derive newtype instance Enum ThreadId
+
 derive newtype instance Bounded ThreadId
+
 derive newtype instance Ord ThreadId
+
 derive newtype instance Eq ThreadId
+
 derive newtype instance Semiring ThreadId
 
 derive instance Generic ThreadId _
 
+derive instance Generic (ProgramEvent msg sta) _
+
+derive instance Generic (EventType msg sta) _
+
 instance Show ThreadId where
   show = genericShow
+
+instance (Show msg, Show sta) => Show (ProgramEvent msg sta) where
+  show = genericShow
+
+instance (Show msg, Show sta) => Show (EventType msg sta) where
+  show = genericShow
+
+---
 
 noRenderer :: forall msg sta. Renderer msg sta
 noRenderer = Renderer
@@ -78,36 +110,6 @@ defaultConfig =
 
 neverExit :: forall msg sta. msg -> sta -> Boolean
 neverExit _ _ = false
-
-type Env msg sta =
-  { stateRef :: Ref sta
-  , nextThreadIdRef :: Ref ThreadId
-  , threadsRef :: Ref (Map ThreadId (Fiber Unit))
-  , programCallback :: Either Error sta -> Effect Unit
-  , program :: Program msg sta
-  , config :: Config msg sta
-  }
-
-data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
-
-derive instance Generic (ProgramEvent msg sta) _
-
-instance (Show msg, Show sta) => Show (ProgramEvent msg sta) where
-  show = genericShow
-
-derive instance Generic (EventType msg sta) _
-
-instance (Show msg, Show sta) => Show (EventType msg sta) where
-  show = genericShow
-
-data EventType msg sta
-  = NewMsg ThreadId msg
-  | EndMsg ThreadId
-  | NewState ThreadId sta
-
-type StateRef_ sta r = (stateRef :: Ref sta | r)
-
-type ThreadsRef_ msg r = (threadsRef :: Ref (Map ThreadId (Fiber (Maybe msg))) | r)
 
 mkProgramEvent :: forall msg sta. EventType msg sta -> Effect (ProgramEvent msg sta)
 mkProgramEvent ev = do

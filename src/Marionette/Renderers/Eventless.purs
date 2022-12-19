@@ -11,11 +11,10 @@ import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 
 type Config = { clearScreen :: Boolean }
+type View sta = sta -> String
 
 defaultConfig :: Config
 defaultConfig = { clearScreen: true }
-
-type View sta = sta -> String
 
 mkRenderer :: forall sta msg. Config -> View sta -> Renderer msg sta
 mkRenderer opts view = Renderer
