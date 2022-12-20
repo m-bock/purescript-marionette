@@ -1,13 +1,11 @@
 module Marionette.Renderers.Commander
-  ( KeyInput
-  , KeyboardUserInput(..)
+  ( KeyboardUserInput(..)
   , NativeNodeKey
   , Output(..)
   , PureCompleter
   , Surface(..)
   , TextInput
   , defaultConfig
-  , defaultKeyInput
   , defaultTextInput
   , mkRenderer
   , mkRenderer_
@@ -31,7 +29,7 @@ newtype Output = TextOutput String
 
 data KeyboardUserInput msg
   = TextInput (String -> Maybe msg) TextInput
-  | KeyInput (NativeNodeKey -> Maybe msg) KeyInput
+  | KeyInput String (NativeNodeKey -> Maybe msg) 
   | NoInput
 
 type PureCompleter = String -> { completions :: Array String, matched :: String }
@@ -42,8 +40,6 @@ type Config =
   , prompt :: String -> String
   , noPrompt :: String
   }
-
-type KeyInput = { prompt :: String }
 
 type TextInput =
   { prompt :: String
@@ -71,8 +67,6 @@ defaultTextInput = { prompt: "", completions: noCompletion }
 noCompletion :: PureCompleter
 noCompletion s = { completions: [], matched: s }
 
-defaultKeyInput :: KeyInput
-defaultKeyInput = { prompt: "" }
 
 defaultConfig :: Config
 defaultConfig =
@@ -90,7 +84,10 @@ mkRenderer :: forall msg sta. View msg sta -> Config -> Renderer msg sta
 mkRenderer view cfg = Renderer
   { onInit, onState, onFinish }
   where
-  onInit = liftEffect emitKeypressEvents
+  onInit = do
+    log eraseScreen
+    log ("\x1b" <> "[200B") -- move down 200 lines
+    liftEffect emitKeypressEvents
 
   onState state onMsg = do
     let surface = view state
@@ -120,8 +117,8 @@ mkRenderer view cfg = Renderer
         Just msg -> onMsg msg
         Nothing -> pure unit
 
-    KeyInput mkMsg { prompt } -> do
-      log $ cfg.prompt prompt
+    KeyInput promptTxt mkMsg -> do
+      log $ cfg.prompt promptTxt
       liftEffect $ getKey \key ->
         case mkMsg key of
           Just msg -> launchAff_ $ onMsg msg
