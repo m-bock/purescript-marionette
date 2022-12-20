@@ -1,12 +1,8 @@
 { name = "marionette"
 , dependencies =
   [ "aff"
-  , "aff-promise"
-  , "arrays"
-  , "bifunctors"
   , "console"
   , "datetime"
-  , "debug"
   , "effect"
   , "either"
   , "enums"
@@ -16,15 +12,10 @@
   , "node-readline"
   , "now"
   , "ordered-collections"
-  , "partial"
   , "prelude"
-  , "random"
   , "refs"
-  , "strings"
   , "transformers"
   , "tuples"
-  , "unfoldable"
-  , "unsafe-coerce"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
