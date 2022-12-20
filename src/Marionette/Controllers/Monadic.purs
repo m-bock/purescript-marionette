@@ -1,4 +1,4 @@
-module Marionett.Controllers.Monadic
+module Marionette.Controllers.Monadic
   ( MarionetteT
   , mkController
   , sendMsg

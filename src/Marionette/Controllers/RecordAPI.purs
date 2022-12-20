@@ -1,4 +1,4 @@
-module Marionett.Controllers.RecordAPI
+module Marionette.Controllers.RecordAPI
   ( ControlAPI
   , mkController
   ) where

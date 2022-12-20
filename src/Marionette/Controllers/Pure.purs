@@ -1,4 +1,4 @@
-module Marionett.ControlHandlers.Pure
+module Marionette.ControlHandlers.Pure
   ( UpdateFn
   , mkController
   ) where

@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Marionett.ControlHandlers.Pure as PureCtrl
+import Marionette.ControlHandlers.Pure as PureCtrl
 import Marionette as Mar
 import Marionette.Renderers.Commander as Comm
 
