@@ -1,5 +1,5 @@
 module Marionett.Controllers.RecordAPI
-  ( RecordAPI
+  ( ControlAPI
   , mkController
   ) where
 
@@ -9,9 +9,9 @@ import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Marionette.Types (Controller(..), State(..))
 
-type Control msg sta = RecordAPI msg sta -> msg -> Aff Unit
+type Control msg sta = ControlAPI msg sta -> msg -> Aff Unit
 
-type RecordAPI msg sta =
+type ControlAPI msg sta =
   { sendMsg :: msg -> Aff Unit
   , getState :: Aff sta
   , putState :: sta -> Aff Unit

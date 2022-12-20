@@ -72,9 +72,9 @@ defaultConfig :: Config
 defaultConfig =
   { clearScreen: true
   , separator: Nothing
-  , noPrompt: "#"
+  , noPrompt: ""
   , prompt: \text -> "> " <>
-      if text == "" then "" else text <> " :"
+      if text == "" then "" else text
   }
 
 mkRenderer_ :: forall msg sta. View msg sta -> Renderer msg sta
