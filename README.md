@@ -2,6 +2,13 @@
 
 `marionette` is a small PureScript only MVC library for writing CLI programs. 
 
+## Caution
+
+<img
+src="https://media.tenor.com/MRCIli40TYoAAAAi/under-construction90s-90s.gif" width="30">
+Very early release, things may not yet work as expected and API may change.
+<img
+src="https://media.tenor.com/MRCIli40TYoAAAAi/under-construction90s-90s.gif" width="30">
 
 ## Installation
 
