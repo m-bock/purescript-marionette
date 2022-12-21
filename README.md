@@ -33,6 +33,9 @@ view count = CliSurface
       { name: "down" } -> Just CountDown
       _ -> Nothing
   )
+
+initialState :: State
+initialState = 0
 ```
 
 It's a counter that runs in the terminal, the user can count up and down by using the arrow keys. Check out the full code in the `examples` folder.
