@@ -1,3 +1,6 @@
+-- | This module contains types that are only needed for low level
+-- | Renderer/Controller implementations.
+
 module Marionette.Types
   ( Controller(..)
   , Renderer(..)
@@ -10,6 +13,10 @@ import Prelude
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
 import Effect.Aff (Aff)
+
+--------------------------------------------------------------------------------
+--- Public
+--------------------------------------------------------------------------------
 
 -- | Low level state implementation that allows to derive reading and updating
 -- | state functions
@@ -37,6 +44,10 @@ newtype Renderer msg sta = Renderer
   , onState :: sta -> (msg -> Aff Unit) -> Aff Unit
   , onFinish :: Aff Unit
   }
+
+--------------------------------------------------------------------------------
+--- Instances
+--------------------------------------------------------------------------------
 
 derive instance Newtype (Renderer msg sta) _
 

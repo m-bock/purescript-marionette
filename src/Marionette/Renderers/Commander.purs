@@ -29,7 +29,7 @@ newtype Output = TextOutput String
 
 data KeyboardUserInput msg
   = TextInput (String -> Maybe msg) TextInput
-  | KeyInput String (NativeNodeKey -> Maybe msg) 
+  | KeyInput String (NativeNodeKey -> Maybe msg)
   | NoInput
 
 type PureCompleter = String -> { completions :: Array String, matched :: String }
@@ -67,7 +67,6 @@ defaultTextInput = { prompt: "", completions: noCompletion }
 noCompletion :: PureCompleter
 noCompletion s = { completions: [], matched: s }
 
-
 defaultConfig :: Config
 defaultConfig =
   { clearScreen: true
@@ -85,22 +84,22 @@ mkRenderer view cfg = Renderer
   { onInit, onState, onFinish }
   where
   onInit = do
-    log eraseScreen
-    log ("\x1b" <> "[200B") -- move down 200 lines
+    when cfg.clearScreen do
+      log eraseScreen
+      log $ cursorMoveDown 200
     liftEffect emitKeypressEvents
 
   onState state onMsg = do
     let surface = view state
     renderCliSurface onMsg surface
 
-  maybeClear = when cfg.clearScreen (log eraseScreen)
 
   maybeSeperator = case cfg.separator of
     Just sep -> log sep
     Nothing -> pure unit
 
   renderCliSurface onMsg (CliSurface output input) = do
-    maybeClear
+    when cfg.clearScreen (log eraseScreen)
     renderOutput output
     maybeSeperator
     renderInput onMsg input
@@ -128,8 +127,12 @@ mkRenderer view cfg = Renderer
 
 ---
 
-eraseScreen :: String
-eraseScreen = "\x1b" <> "[2J"
+
+eraseScreen :: Effect Unit
+eraseScreen = log ("\x1b" <> "[2J")
+
+cursorMoveDown :: Int ->  Effect Unit
+cursorMoveDown n = log ("\x1b" <> "[" <> show n <> "B")
 
 foreign import getKey :: (NativeNodeKey -> Effect Unit) -> Effect Unit
 

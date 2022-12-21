@@ -1,6 +1,7 @@
 -- | The main module of the `marionette` runtime. You need a `Controller` and a
 -- | `Renderer` in addition to the types and functions that are defined in here to
 -- | run a state machine program.
+
 module Marionette
   ( Config
   , EventType(..)
@@ -34,6 +35,10 @@ import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Marionette.Types (Controller(..), Renderer(..), State(..))
+
+--------------------------------------------------------------------------------
+--- Public
+--------------------------------------------------------------------------------
 
 -- | Type variables:
 -- | - `msg` the message type of your program
@@ -92,43 +97,6 @@ type Env msg sta =
   , config :: Config msg sta
   }
 
----
-
-derive newtype instance Enum ThreadId
-
-derive newtype instance Bounded ThreadId
-
-derive newtype instance Ord ThreadId
-
-derive newtype instance Eq ThreadId
-
-derive newtype instance Semiring ThreadId
-
-derive instance Generic ThreadId _
-
-derive instance Generic (ProgramEvent msg sta) _
-
-derive instance Generic (EventType msg sta) _
-
-instance Show ThreadId where
-  show = genericShow
-
-instance (Show msg, Show sta) => Show (ProgramEvent msg sta) where
-  show = genericShow
-
-instance (Show msg, Show sta) => Show (EventType msg sta) where
-  show = genericShow
-
----
-
--- | A renderer that does nothing. Useful if like to run a headless state machine.
-noRenderer :: forall msg sta. Renderer msg sta
-noRenderer = Renderer
-  { onInit: pure unit
-  , onState: \_ _ -> pure unit
-  , onFinish: pure unit
-  }
-
 -- | A controller that does nothing. Useful if you just want to render something and the controller is not implemented yet.
 noController :: forall msg sta. Controller msg sta
 noController = Controller \_ _ _ -> pure unit
@@ -168,7 +136,46 @@ runProgram program config = makeAff \programCallback -> do
 
   pure (Canceler \_ -> cleanup env)
 
----
+-- | A renderer that does nothing. Useful if like to run a headless state machine.
+noRenderer :: forall msg sta. Renderer msg sta
+noRenderer = Renderer
+  { onInit: pure unit
+  , onState: \_ _ -> pure unit
+  , onFinish: pure unit
+  }
+
+--------------------------------------------------------------------------------
+--- Instances
+--------------------------------------------------------------------------------
+
+derive newtype instance Enum ThreadId
+
+derive newtype instance Bounded ThreadId
+
+derive newtype instance Ord ThreadId
+
+derive newtype instance Eq ThreadId
+
+derive newtype instance Semiring ThreadId
+
+derive instance Generic ThreadId _
+
+derive instance Generic (ProgramEvent msg sta) _
+
+derive instance Generic (EventType msg sta) _
+
+instance Show ThreadId where
+  show = genericShow
+
+instance (Show msg, Show sta) => Show (ProgramEvent msg sta) where
+  show = genericShow
+
+instance (Show msg, Show sta) => Show (EventType msg sta) where
+  show = genericShow
+
+--------------------------------------------------------------------------------
+--- Core
+--------------------------------------------------------------------------------
 
 neverExit :: forall msg sta. msg -> sta -> Boolean
 neverExit _ _ = false

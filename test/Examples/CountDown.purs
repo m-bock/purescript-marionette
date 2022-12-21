@@ -6,8 +6,8 @@ import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, Milliseconds(..), launchAff_)
 import Effect.Aff as Aff
-import Marionette.Controllers.RecordAPI (ControlAPI)
-import Marionette.Controllers.RecordAPI as RecAPI
+import Marionette.Controllers.ControlAPI (ControlAPI)
+import Marionette.Controllers.ControlAPI as RecAPI
 import Marionette as Mar
 import Marionette.Renderers.Commander as Comm
 

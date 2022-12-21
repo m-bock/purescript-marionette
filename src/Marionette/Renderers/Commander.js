@@ -1,9 +1,7 @@
 import * as readline from "readline";
 
-
 export const emitKeypressEvents = () =>
     readline.emitKeypressEvents(process.stdin);
-
 
 export const getKey = (cb) => () => {
 
@@ -18,8 +16,7 @@ export const getKey = (cb) => () => {
 
     process.stdin.setRawMode(true);
     process.stdin.resume();
-    
-    process.stdin.removeAllListeners("keypress")
-    process.stdin.once("keypress", fn);
 
+    process.stdin.removeAllListeners("keypress");
+    process.stdin.once("keypress", fn);
 };
