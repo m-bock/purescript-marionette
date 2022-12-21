@@ -18,8 +18,8 @@ update msg state = case msg of
   CountUp -> state + 1
   CountDown -> state - 1
 
-view :: State -> Comm.Surface Msg
-view count = Comm.Surface
+view :: State -> Comm.CliSurface Msg
+view count = Comm.CliSurface
   ( Comm.TextOutput $
       "Current count: " <> show count
   )

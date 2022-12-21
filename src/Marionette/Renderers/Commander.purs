@@ -3,13 +3,13 @@ module Marionette.Renderers.Commander
   , NativeNodeKey
   , Output(..)
   , PureCompleter
-  , Surface(..)
+  , CliSurface(..)
   , TextInput
   , defaultConfig
   , defaultTextInput
   , mkRenderer
   , mkRenderer_
-  , noSurface
+  , noCliSurface
   ) where
 
 import Prelude
@@ -23,7 +23,7 @@ import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
 
-data Surface msg = Surface Output (KeyboardUserInput msg)
+data CliSurface msg = CliSurface Output (KeyboardUserInput msg)
 
 newtype Output = TextOutput String
 
@@ -54,12 +54,12 @@ type NativeNodeKey =
   , shift :: Boolean
   }
 
-type View msg sta = sta -> Surface msg
+type View msg sta = sta -> CliSurface msg
 
 ---
 
-noSurface :: forall msg. Surface msg
-noSurface = Surface (TextOutput "") NoInput
+noCliSurface :: forall msg. CliSurface msg
+noCliSurface = CliSurface (TextOutput "") NoInput
 
 defaultTextInput :: TextInput
 defaultTextInput = { prompt: "", completions: noCompletion }
@@ -91,7 +91,7 @@ mkRenderer view cfg = Renderer
 
   onState state onMsg = do
     let surface = view state
-    renderSurface onMsg surface
+    renderCliSurface onMsg surface
 
   maybeClear = when cfg.clearScreen (log eraseScreen)
 
@@ -99,7 +99,7 @@ mkRenderer view cfg = Renderer
     Just sep -> log sep
     Nothing -> pure unit
 
-  renderSurface onMsg (Surface output input) = do
+  renderCliSurface onMsg (CliSurface output input) = do
     maybeClear
     renderOutput output
     maybeSeperator

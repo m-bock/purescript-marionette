@@ -37,9 +37,9 @@ control api = case _ of
     Aff.delay (Milliseconds 1000.0)
     api.sendMsg Tick
 
-view :: State -> Comm.Surface Msg
+view :: State -> Comm.CliSurface Msg
 view = case _ of
-  Init -> Comm.Surface
+  Init -> Comm.CliSurface
     ( Comm.TextOutput
         ""
     )
@@ -48,11 +48,11 @@ view = case _ of
         _ -> Nothing
     )
 
-  CountingDown n -> Comm.Surface
+  CountingDown n -> Comm.CliSurface
     (Comm.TextOutput $ show n <> "...")
     (Comm.NoInput)
 
-  LaunchSpaceShip -> Comm.Surface
+  LaunchSpaceShip -> Comm.CliSurface
     (Comm.TextOutput $ "boom!")
     (Comm.NoInput)
 
