@@ -18,7 +18,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, makeAff, nonCanceler)
-import Effect.Class (liftEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
@@ -85,21 +85,20 @@ mkRenderer view cfg = Renderer
   where
   onInit = do
     when cfg.clearScreen do
-      log eraseScreen
-      log $ cursorMoveDown 200
+      eraseScreen
+      cursorMoveDown 200
     liftEffect emitKeypressEvents
 
   onState state onMsg = do
     let surface = view state
     renderCliSurface onMsg surface
 
-
   maybeSeperator = case cfg.separator of
     Just sep -> log sep
     Nothing -> pure unit
 
   renderCliSurface onMsg (CliSurface output input) = do
-    when cfg.clearScreen (log eraseScreen)
+    when cfg.clearScreen eraseScreen
     renderOutput output
     maybeSeperator
     renderInput onMsg input
@@ -123,15 +122,14 @@ mkRenderer view cfg = Renderer
           Just msg -> launchAff_ $ onMsg msg
           Nothing -> pure unit
 
-  onFinish = log eraseScreen
+  onFinish = eraseScreen
 
 ---
 
-
-eraseScreen :: Effect Unit
+eraseScreen :: forall m. MonadEffect m => m Unit
 eraseScreen = log ("\x1b" <> "[2J")
 
-cursorMoveDown :: Int ->  Effect Unit
+cursorMoveDown :: forall m. MonadEffect m => Int -> m Unit
 cursorMoveDown n = log ("\x1b" <> "[" <> show n <> "B")
 
 foreign import getKey :: (NativeNodeKey -> Effect Unit) -> Effect Unit

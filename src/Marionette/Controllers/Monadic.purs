@@ -1,24 +1,32 @@
+-- | This module provides the most flexible way to handle state control via a
+-- | `MarionetteT` monad transformer.
+
 module Marionette.Controllers.Monadic
-  ( MarionetteT
+  ( Control
+  , MarionetteT
   , mkController
   , sendMsg
   ) where
 
 import Prelude
 
-import Control.Monad.Reader (class MonadTrans, ReaderT(..), ask, lift, runReaderT)
+import Control.Monad.Reader (class MonadTrans, ReaderT, ask, lift, runReaderT)
 import Control.Monad.State (class MonadState)
-import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
 import Marionette.Types (Controller(..), SendMsg, State(..))
 
-type Control msg sta m = msg -> MarionetteT msg sta m Unit
+--------------------------------------------------------------------------------
+--- Public
+--------------------------------------------------------------------------------
 
----
+-- | A monad transformer that adds the following features to the base monad `m`
+-- |
+-- | - read/write access to the program's state (`sta`) via a StateMonad instance
+-- | - the ability to use `sendMsg` to raise messages (values of type `msg`)
+-- |   from within a control handler
 
-newtype MarionetteT msg sta (m :: Type -> Type) a = MarionetteT (ReaderT (MarionetteEnv msg sta m) m a)
-
-newtype MarionetteEnv msg sta (m :: Type -> Type) = MarionetteEnv { state :: State sta m, sendMsg :: SendMsg msg m }
+newtype MarionetteT msg sta (m :: Type -> Type) a =
+  MarionetteT (ReaderT (MarionetteEnv msg sta m) m a)
 
 derive newtype instance Monad m => Monad (MarionetteT msg sta m)
 
@@ -39,22 +47,27 @@ instance Monad m => MonadState sta (MarionetteT msg sta m) where
     MarionetteEnv { state: State state } <- ask
     lift $ state f
 
-runMarionetteT :: forall msg sta m a. SendMsg msg m -> State sta m -> MarionetteT msg sta m a -> m a
-runMarionetteT sendMsg_ state (MarionetteT ma) = runReaderT ma $ MarionetteEnv { sendMsg: sendMsg_, state }
-
+-- | Triggers a new message from within a control handler
 sendMsg :: forall msg sta m. Monad m => msg -> MarionetteT msg sta m Unit
 sendMsg msg = MarionetteT do
   MarionetteEnv env <- ask
   lift $ env.sendMsg msg
 
+-- | Creates a low level controller when given a high level control function
 mkController :: forall msg sta. Control msg sta Aff -> Controller msg sta
 mkController mc = Controller \sendMsg_ state msg -> runMarionetteT sendMsg_ state $ mc msg
 
--- class MonadSendMsg msg m where
---   sendMsg :: msg -> m Unit
+-- | The high level control function. Takes a `msg` and returns a computation
+-- | inside the `MarionetteT` monad transformer. 
+type Control msg sta m = msg -> MarionetteT msg sta m Unit
 
--- class
---   ( MonadSendMsg msg m
---   , MonadState sta m
---   ) <=
---   MonadMarionette msg sta m
+--------------------------------------------------------------------------------
+--- Util
+--------------------------------------------------------------------------------
+
+newtype MarionetteEnv msg sta (m :: Type -> Type) =
+  MarionetteEnv { state :: State sta m, sendMsg :: SendMsg msg m }
+
+runMarionetteT :: forall msg sta m a. SendMsg msg m -> State sta m -> MarionetteT msg sta m a -> m a
+runMarionetteT sendMsg_ state (MarionetteT ma) =
+  runReaderT ma $ MarionetteEnv { sendMsg: sendMsg_, state }
