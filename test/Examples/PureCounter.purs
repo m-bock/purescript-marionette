@@ -7,7 +7,7 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Marionette as Mar
 import Marionette.ControlHandlers.Pure as PureCtrl
-import Marionette.Renderers.Commander (KeyPrompt(..))
+import Marionette.Renderers.Commander (CliSurface(..), KeyPrompt(..), KeyboardUserInput(..), Output(..))
 import Marionette.Renderers.Commander as Comm
 
 type State = Int
@@ -19,12 +19,12 @@ update msg state = case msg of
   CountUp -> state + 1
   CountDown -> state - 1
 
-view :: State -> Comm.CliSurface Msg
-view count = Comm.CliSurface
-  ( Comm.TextOutput $
+view :: State -> CliSurface Msg
+view count = CliSurface
+  ( TextOutput $
       "Current count: " <> show count
   )
-  ( Comm.KeyInput (KeyPrompt "Use up/down keys") case _ of
+  ( KeyInput (KeyPrompt "Use up/down keys") case _ of
       { name: "up" } -> Just CountUp
       { name: "down" } -> Just CountDown
       _ -> Nothing

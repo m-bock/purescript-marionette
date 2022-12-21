@@ -9,9 +9,37 @@
 spago install marionette (TODO: publish to pursuit to make this work)
 ```
 
-## Examples
+## Getting started
 
-Check out the examples folder to get started.
+In the simplest form a `marionette` program can look like this:
+
+```hs
+type State = Int
+
+data Msg = CountUp | CountDown
+
+update :: Msg -> State -> State
+update msg state = case msg of
+  CountUp -> state + 1
+  CountDown -> state - 1
+
+view :: State -> CliSurface Msg
+view count = CliSurface
+  ( TextOutput $
+      "Current count: " <> show count
+  )
+  ( KeyInput (KeyPrompt "Use up/down keys") case _ of
+      { name: "up" } -> Just CountUp
+      { name: "down" } -> Just CountDown
+      _ -> Nothing
+  )
+```
+
+It's a counter that runs in the terminal, the user can count up and down by using the arrow keys. Check out the full code in the `examples` folder.
+
+
+
+## Examples
 
 ### PureCounter
 
