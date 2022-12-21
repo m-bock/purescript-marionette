@@ -5,8 +5,9 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Marionette.ControlHandlers.Pure as PureCtrl
 import Marionette as Mar
+import Marionette.ControlHandlers.Pure as PureCtrl
+import Marionette.Renderers.Commander (KeyPrompt(..))
 import Marionette.Renderers.Commander as Comm
 
 type State = Int
@@ -23,7 +24,7 @@ view count = Comm.CliSurface
   ( Comm.TextOutput $
       "Current count: " <> show count
   )
-  ( Comm.KeyInput "Use up/down keys" case _ of
+  ( Comm.KeyInput (KeyPrompt "Use up/down keys") case _ of
       { name: "up" } -> Just CountUp
       { name: "down" } -> Just CountDown
       _ -> Nothing

@@ -6,9 +6,10 @@ import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, Milliseconds(..), launchAff_)
 import Effect.Aff as Aff
+import Marionette as Mar
 import Marionette.Controllers.ControlAPI (ControlAPI)
 import Marionette.Controllers.ControlAPI as RecAPI
-import Marionette as Mar
+import Marionette.Renderers.Commander (KeyPrompt(..))
 import Marionette.Renderers.Commander as Comm
 
 data State
@@ -43,7 +44,7 @@ view = case _ of
     ( Comm.TextOutput
         ""
     )
-    ( Comm.KeyInput "Press the 's' key to start!" case _ of
+    ( Comm.KeyInput (KeyPrompt "Press the 's' key to start!") case _ of
         { name: "s" } -> Just Start
         _ -> Nothing
     )

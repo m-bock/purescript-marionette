@@ -1,12 +1,13 @@
 module Marionette.Renderers.Commander
-  ( KeyboardUserInput(..)
+  ( CliSurface(..)
+  , Completions(..)
+  , KeyPrompt(..)
+  , KeyboardUserInput(..)
   , NativeNodeKey
   , Output(..)
-  , PureCompleter
-  , CliSurface(..)
-  , TextInput
+  , TextPrompt(..)
+  , View
   , defaultConfig
-  , defaultTextInput
   , mkRenderer
   , mkRenderer_
   , noCliSurface
@@ -23,27 +24,40 @@ import Effect.Class.Console (log)
 import Marionette.Types (Renderer(..))
 import Node.ReadLine as RL
 
+--------------------------------------------------------------------------------
+--- Public
+--------------------------------------------------------------------------------
+
+-- | The rendered surface in the terminal. Equivalent to `Html msg` types in Web frameworks.
+-- | 
+-- | It's responsible for both
+-- | - render output to the console
+-- | - handle user input
 data CliSurface msg = CliSurface Output (KeyboardUserInput msg)
 
+-- | Text output printed to the console
 newtype Output = TextOutput String
 
 data KeyboardUserInput msg
-  = TextInput (String -> Maybe msg) TextInput
-  | KeyInput String (NativeNodeKey -> Maybe msg)
+  = TextInput TextPrompt (String -> Maybe msg)
+  | KeyInput KeyPrompt (NativeNodeKey -> Maybe msg)
   | NoInput
 
-type PureCompleter = String -> { completions :: Array String, matched :: String }
+-- | The prompt text used when the user should enter a key
+newtype KeyPrompt = KeyPrompt String
+
+-- | The prompt text used when the user should enter some text
+data TextPrompt = TextPrompt String Completions
+
+data Completions
+  = Completions (String -> { completions :: Array String, matched :: String })
+  | NoCompletions
 
 type Config =
   { clearScreen :: Boolean
   , separator :: Maybe String
   , prompt :: String -> String
   , noPrompt :: String
-  }
-
-type TextInput =
-  { prompt :: String
-  , completions :: PureCompleter
   }
 
 type NativeNodeKey =
@@ -56,16 +70,8 @@ type NativeNodeKey =
 
 type View msg sta = sta -> CliSurface msg
 
----
-
 noCliSurface :: forall msg. CliSurface msg
 noCliSurface = CliSurface (TextOutput "") NoInput
-
-defaultTextInput :: TextInput
-defaultTextInput = { prompt: "", completions: noCompletion }
-
-noCompletion :: PureCompleter
-noCompletion s = { completions: [], matched: s }
 
 defaultConfig :: Config
 defaultConfig =
@@ -108,14 +114,14 @@ mkRenderer view cfg = Renderer
   renderInput onMsg = case _ of
     NoInput -> log cfg.noPrompt
 
-    TextInput mkMsg { prompt, completions } -> do
-      log prompt
+    TextInput (TextPrompt promptTxt completions) mkMsg -> do
+      log promptTxt
       answer <- getAnswer completions
       case mkMsg answer of
         Just msg -> onMsg msg
         Nothing -> pure unit
 
-    KeyInput promptTxt mkMsg -> do
+    KeyInput (KeyPrompt promptTxt) mkMsg -> do
       log $ cfg.prompt promptTxt
       liftEffect $ getKey \key ->
         case mkMsg key of
@@ -132,16 +138,17 @@ eraseScreen = log ("\x1b" <> "[2J")
 cursorMoveDown :: forall m. MonadEffect m => Int -> m Unit
 cursorMoveDown n = log ("\x1b" <> "[" <> show n <> "B")
 
-foreign import getKey :: (NativeNodeKey -> Effect Unit) -> Effect Unit
-
-foreign import emitKeypressEvents :: Effect Unit
-
-getAnswer :: PureCompleter -> Aff String
-getAnswer completions = do
-  interface <- liftEffect $ RL.createConsoleInterface (pure <<< completions)
+getAnswer :: Completions -> Aff String
+getAnswer pureCompletions = do
+  interface <- liftEffect $ RL.createConsoleInterface completer
   answer <- promptAff interface
   liftEffect $ RL.close interface
   pure answer
+
+  where
+  completer = case pureCompletions of
+    NoCompletions -> RL.noCompletion
+    Completions f -> pure <<< f
 
 promptAff
   :: RL.Interface -> Aff String
@@ -149,3 +156,11 @@ promptAff interface = makeAff \handler -> do
   RL.setLineHandler (handler <<< Right) interface
   RL.prompt interface
   pure nonCanceler
+
+--------------------------------------------------------------------------------
+--- FFI
+--------------------------------------------------------------------------------
+
+foreign import getKey :: (NativeNodeKey -> Effect Unit) -> Effect Unit
+
+foreign import emitKeypressEvents :: Effect Unit
