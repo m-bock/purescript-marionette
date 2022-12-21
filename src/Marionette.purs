@@ -1,3 +1,6 @@
+-- | The main module of the `marionette` runtime. You need a `Controller` and a
+-- | `Renderer` in addition to the types and functions that are defined in here to
+-- | run a state machine program.
 module Marionette
   ( Config
   , EventType(..)
@@ -32,19 +35,53 @@ import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Marionette.Types (Controller(..), Renderer(..), State(..))
 
+-- | Type variables:
+-- | - `msg` the message type of your program
+-- | - `sta` the state type of your program
+-- |
+-- | Record fields:
+-- | - `initialState` 
+-- | - `renderer` specifies how state is rendered
+-- | - `controller` specifies the how the control flow is handled
 type Program msg sta =
   { initialState :: sta
   , renderer :: Renderer msg sta
   , controller :: Controller msg sta
   }
 
+-- | Type variables:
+-- | - `msg` the message type of your program
+-- | - `sta` the state type of your program
+-- |
+-- | Record fields:
+-- | - `exitIf` provides an exit condition to leave the running state machine
+-- |   based on the current message/state combination.
+-- | - `initialMsg` useful if the first message event is not triggered by user input.
+-- | - `onEvent` lets you observe events that occur inside the `marionette`
+-- |   runtime. This is useful for either debugging or other kind of state
+-- |   machine flow analysis. 
 type Config msg sta =
   { exitIf :: msg -> sta -> Boolean
   , initialMsg :: Maybe msg
   , onEvent :: ProgramEvent msg sta -> Effect Unit
   }
 
+-- | Every time a message is raised a new thread with an unique `ThreadId` is created that has read and
+-- | write access to the program's state.
 newtype ThreadId = ThreadId Int
+
+-- | General Program event type that contains a timestamp and a more specific
+-- | event type.
+data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
+
+-- | Possible observable events that may occur inside the `marionette` runtime. 
+data EventType msg sta
+  -- | new thread is triggered by a message event
+  = NewMsg ThreadId msg
+  -- | specific thread triggered by a message event has finished running
+  | EndMsg ThreadId
+  -- | new state update has been performed and a re-rendering was triggered
+  | NewState ThreadId sta
 
 type Env msg sta =
   { stateRef :: Ref sta
@@ -54,13 +91,6 @@ type Env msg sta =
   , program :: Program msg sta
   , config :: Config msg sta
   }
-
-data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
-
-data EventType msg sta
-  = NewMsg ThreadId msg
-  | EndMsg ThreadId
-  | NewState ThreadId sta
 
 ---
 
@@ -91,6 +121,7 @@ instance (Show msg, Show sta) => Show (EventType msg sta) where
 
 ---
 
+-- | A renderer that does nothing. Useful if like to run a headless state machine.
 noRenderer :: forall msg sta. Renderer msg sta
 noRenderer = Renderer
   { onInit: pure unit
@@ -98,15 +129,46 @@ noRenderer = Renderer
   , onFinish: pure unit
   }
 
+-- | A controller that does nothing. Useful if you just want to render something and the controller is not implemented yet.
 noController :: forall msg sta. Controller msg sta
 noController = Controller \_ _ _ -> pure unit
 
+-- | Some defaults for the [Config](#t:Config) type
 defaultConfig :: forall msg sta. Config msg sta
 defaultConfig =
   { initialMsg: Nothing
   , exitIf: neverExit
   , onEvent: \_ -> pure unit
   }
+
+-- | Takes a stateful program specification and some configuration and runs the
+-- | program in an `Aff` context.
+-- |
+-- | Once the program has finished the final state is returned and all running
+-- | threads are aborted.
+runProgram :: forall msg sta. Eq sta => Program msg sta -> Config msg sta -> Aff sta
+runProgram program config = makeAff \programCallback -> do
+  stateRef <- Ref.new program.initialState
+  threadsRef <- Ref.new Map.empty
+  nextThreadIdRef <- Ref.new (ThreadId 0)
+
+  let
+    env =
+      { stateRef
+      , threadsRef
+      , nextThreadIdRef
+      , program
+      , config
+      , programCallback
+      }
+
+  launchAff_ do
+    initProgram env
+    view env
+
+  pure (Canceler \_ -> cleanup env)
+
+---
 
 neverExit :: forall msg sta. msg -> sta -> Boolean
 neverExit _ _ = false
@@ -178,25 +240,3 @@ checkExit env msg cont = do
     liftEffect $ env.programCallback $ Right state
   else
     cont
-
-runProgram :: forall msg sta. Eq sta => Program msg sta -> Config msg sta -> Aff sta
-runProgram program config = makeAff \programCallback -> do
-  stateRef <- Ref.new program.initialState
-  threadsRef <- Ref.new Map.empty
-  nextThreadIdRef <- Ref.new (ThreadId 0)
-
-  let
-    env =
-      { stateRef
-      , threadsRef
-      , nextThreadIdRef
-      , program
-      , config
-      , programCallback
-      }
-
-  launchAff_ do
-    initProgram env
-    view env
-
-  pure (Canceler \_ -> cleanup env)
