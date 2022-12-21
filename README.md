@@ -24,7 +24,7 @@ spago run --main Test.Examples.PureCounter
 ### CountDown
 
 ```
-spago run --main Test.Examples.PureCounter
+spago run --main Test.Examples.CountDown
 ```
 
 <img src="assets/CountDown.gif"/>
