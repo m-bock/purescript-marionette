@@ -13,7 +13,7 @@ spago install marionette (TODO: publish to pursuit to make this work)
 
 Check out the examples folder to get started.
 
-### Pure Counter
+### PureCounter
 
 ```
 spago run --main Test.Examples.PureCounter
