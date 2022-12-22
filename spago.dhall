@@ -1,6 +1,7 @@
 { name = "marionette"
 , dependencies =
   [ "aff"
+  , "arrays"
   , "console"
   , "datetime"
   , "effect"
@@ -14,6 +15,7 @@
   , "ordered-collections"
   , "prelude"
   , "refs"
+  , "strings"
   , "transformers"
   , "tuples"
   ]

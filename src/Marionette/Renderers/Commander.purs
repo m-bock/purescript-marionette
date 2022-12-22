@@ -30,8 +30,7 @@ module Marionette.Renderers.Commander
   , mkRenderer
   , mkRenderer_
   , noCliSurface
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -57,6 +56,9 @@ data CliSurface msg = CliSurface Output (KeyboardUserInput msg)
 
 -- | Text output printed to the console
 newtype Output = TextOutput String
+
+derive newtype instance Semigroup Output
+derive newtype instance Monoid Output
 
 -- | In a `commander` program the way user input is received is constrained to
 -- | the following options

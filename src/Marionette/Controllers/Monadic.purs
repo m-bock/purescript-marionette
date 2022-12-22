@@ -13,6 +13,8 @@ import Prelude
 import Control.Monad.Reader (class MonadTrans, ReaderT, ask, lift, runReaderT)
 import Control.Monad.State (class MonadState)
 import Effect.Aff (Aff)
+import Effect.Aff.Class (class MonadAff)
+import Effect.Class (class MonadEffect)
 import Marionette.Types (Controller(..), SendMsg, State(..))
 
 --------------------------------------------------------------------------------
@@ -37,6 +39,10 @@ derive newtype instance Apply m => Apply (MarionetteT msg sta m)
 derive newtype instance Applicative m => Applicative (MarionetteT msg sta m)
 
 derive newtype instance Functor m => Functor (MarionetteT msg sta m)
+
+derive newtype instance MonadEffect m => MonadEffect (MarionetteT msg sta m)
+
+derive newtype instance MonadAff m => MonadAff (MarionetteT msg sta m)
 
 instance MonadTrans (MarionetteT msg sta)
   where
