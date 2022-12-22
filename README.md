@@ -45,6 +45,8 @@ It's a counter that runs in the terminal, the user can count up and down by usin
 
 ### PureCounter
 
+[Source](blob/main/test/Examples/PureCounter.purs)
+
 ```
 spago run --main Test.Examples.PureCounter
 ```
