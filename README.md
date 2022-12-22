@@ -45,7 +45,7 @@ It's a counter that runs in the terminal, the user can count up and down by usin
 
 ### PureCounter
 
-[Source](blob/main/test/Examples/PureCounter.purs)
+[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/PureCounter.purs)
 
 ```
 spago run --main Test.Examples.PureCounter
@@ -55,6 +55,8 @@ spago run --main Test.Examples.PureCounter
 
 ### CountDown
 
+[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/CountDown.purs)
+
 ```
 spago run --main Test.Examples.CountDown
 ```
@@ -62,6 +64,8 @@ spago run --main Test.Examples.CountDown
 <img src="assets/CountDown.gif"/>
 
 ### WordTicker
+
+[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/WordTicker.purs)
 
 ```
 spago run --main Test.Examples.WordTicker
@@ -72,7 +76,7 @@ spago run --main Test.Examples.WordTicker
 
 ### Snake
 
-The snake implementation can be found [here](https://github.com/thought2/purescript-marionette.snake-demo)
+The snake implementation can be found in [this repo](https://github.com/thought2/purescript-marionette.snake-demo).
 
 <img src="https://raw.githubusercontent.com/thought2/purescript-marionette.snake-demo/main/assets/demo.gif"/>
 
