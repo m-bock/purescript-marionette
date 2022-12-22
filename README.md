@@ -67,3 +67,10 @@ spago run --main Test.Examples.CountDown
 
 <img src="assets/CountDown.gif"/>
 
+## Prior work
+
+- [brick](https://hackage.haskell.org/package/brick)
+  A declarative Unix terminal UI library written in Haskell
+- [ink](https://github.com/vadimdemedes/ink)
+  React for interactive command-line apps
+  

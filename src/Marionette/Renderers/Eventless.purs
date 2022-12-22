@@ -22,7 +22,7 @@ import Marionette.Types (Renderer(..))
 -- | Main configuration options for the `eventless` renderer
 -- |
 -- | - `clearScreen` defines weather the terminal screen should be cleared
--- |   before each render. If not, subsequent views are rendered in sequence in
+-- |   before each render. If not, subsequent views are rendered in below each other in
 -- |   the terminal.
 type Config = { clearScreen :: Boolean }
 
