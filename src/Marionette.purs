@@ -41,11 +41,11 @@ import Marionette.Types (Controller(..), Renderer(..), State(..))
 --------------------------------------------------------------------------------
 
 -- | Type variables:
--- | - `msg` the message type of your program
--- | - `sta` the state type of your program
+-- | - `msg` message type of your program
+-- | - `sta` state type of your program
 -- |
 -- | Record fields:
--- | - `initialState` 
+-- | - `initialState` value of the initial state
 -- | - `renderer` specifies how state is rendered
 -- | - `controller` specifies the how the control flow is handled
 type Program msg sta =
@@ -75,7 +75,7 @@ type Config msg sta =
 -- | write access to the program's state.
 newtype ThreadId = ThreadId Int
 
--- | General Program event type that contains a timestamp and a more specific
+-- | General program event type that contains a timestamp and a more specific
 -- | event type.
 data ProgramEvent msg sta = ProgramEvent Instant (EventType msg sta)
 

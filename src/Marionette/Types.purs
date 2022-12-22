@@ -32,8 +32,8 @@ newtype Controller msg sta = Controller
   (SendMsg msg Aff -> State sta Aff -> msg -> Aff Unit)
 
 -- | Type variables:
--- | - `msg` the message type of your program
--- | - `sta` the state type of your program
+-- | - `msg` message type of your program
+-- | - `sta` state type of your program
 -- |
 -- | Record fields:
 -- | - `onInit` runs before the state machine starts

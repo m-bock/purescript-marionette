@@ -1,6 +1,6 @@
 -- | A simplistic controller that is completely pure and does not perform any side effects.
 
-module Marionette.ControlHandlers.Pure
+module Marionette.Controllers.Pure
   ( UpdateFn
   , mkController
   ) where

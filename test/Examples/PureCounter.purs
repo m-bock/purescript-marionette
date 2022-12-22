@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Marionette as Mar
-import Marionette.ControlHandlers.Pure as PureCtrl
+import Marionette.Controllers.Pure as PureCtrl
 import Marionette.Renderers.Commander (CliSurface(..), KeyPrompt(..), KeyboardUserInput(..), Output(..))
 import Marionette.Renderers.Commander as Comm
 
