@@ -87,3 +87,6 @@ The snake implementation can be found in [this repo](https://github.com/thought2
 - [ink](https://github.com/vadimdemedes/ink)
   React for interactive command-line apps
   
+## Documentation
+
+- Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-marionette).
