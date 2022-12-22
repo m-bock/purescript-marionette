@@ -80,7 +80,7 @@ The snake implementation can be found in [this repo](https://github.com/thought2
 
 <img src="https://raw.githubusercontent.com/thought2/purescript-marionette.snake-demo/main/assets/demo.gif"/>
 
-## Prior work
+## Inspired By
 
 - [brick](https://hackage.haskell.org/package/brick)
   A declarative Unix terminal UI library written in Haskell
