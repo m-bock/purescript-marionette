@@ -65,7 +65,7 @@ view = case _ of
   Greet { word, time } -> CliSurface
     ( let
         sep = " ++ "
-        width = 80
+        width = 40
         line = (Str.joinWith sep $ Arr.replicate width word) <> sep
       in
         TextOutput $
@@ -73,7 +73,7 @@ view = case _ of
 
     )
     ( Comm.KeyInput
-        (KeyPrompt "Press the 'w' key to pause and enter word!")
+        (KeyPrompt "Press 'w' enter a new word!")
         case _ of
           { name: "w" } -> Just GoToEnterWord
           _ -> Nothing

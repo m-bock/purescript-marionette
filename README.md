@@ -67,6 +67,21 @@ spago run --main Test.Examples.CountDown
 
 <img src="assets/CountDown.gif"/>
 
+### WordTicker
+
+```
+spago run --main Test.Examples.WordTicker
+```
+
+<img src="assets/WordTicker.gif"/>
+
+
+### Snake
+
+The snake implementation can be found [here](https://github.com/thought2/purescript-marionette.snake-demo)
+
+<img src="https://raw.githubusercontent.com/thought2/purescript-marionette.snake-demo/main/assets/demo.gif"/>
+
 ## Prior work
 
 - [brick](https://hackage.haskell.org/package/brick)
