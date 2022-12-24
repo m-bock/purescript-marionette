@@ -80,6 +80,28 @@ The snake implementation can be found in [this repo](https://github.com/thought2
 
 <img src="https://raw.githubusercontent.com/thought2/purescript-marionette.snake-demo/main/assets/demo.gif"/>
 
+## FAQ
+
+- Q: Does it have "components" with local state?
+
+  A: No, there's only one global state. (Comparable to Elm)
+
+- Q: How are side effects handled in state updates?
+
+  A: If you chose the "monadic" or the "controlAPI" controller you can perform side effects mixed with asynchronous state updates in the control function. (Comparable to Halogen event handlers)
+
+- Q: How about subscriptions for recurring effects?
+
+  A: For now there's no special subscription mechanism implemented. However, besides state updates you can also trigger new messages from within asynchronous control handlers. As the examples show, with this you can implement subscriptions manually.
+
+- Q: Does it only run in Node or can I use it in the browser, too?
+
+  A: Currently it only runs in Node. But there are plans to provide a renderer for ReactBasic, too.
+
+- Q: If many control handlers can run asynchronously and can even trigger new ones recursively. How about memory leaks?
+
+  A: For the time the state machine is running you have to take care about this manually. However, all running control handlers are canceled automatically once the state machine exits.
+
 ## Inspired By
 
 - [brick](https://hackage.haskell.org/package/brick)
