@@ -152,7 +152,7 @@ runProgram program config = makeAff \programCallback -> do
 -- | A renderer that does nothing. Useful if like to run a headless state machine.
 noRenderer :: forall msg sta. Renderer msg sta
 noRenderer = Renderer
-  { onInit: pure unit
+  { onInit: \_ -> pure unit
   , onState: \_ _ -> pure unit
   , onFinish: pure unit
   }
@@ -209,7 +209,7 @@ cleanup { stateHandler: State state, threadsRef, programCallback, program } = do
 
 initProgram :: forall msg sta. Eq sta => Env msg sta -> Aff Unit
 initProgram env = do
-  (unwrap env.program.renderer).onInit
+  (unwrap env.program.renderer).onInit (runFreshThread env)
   case env.config.initialMsg of
     Just msg -> runFreshThread env msg
     Nothing -> pure unit
@@ -252,18 +252,18 @@ hookStateHandler (State st1) env id = State \f -> do
 
 view :: forall msg sta. Eq sta => Env msg sta -> Aff Unit
 view env@{ stateHandler: State state } = do
-  state <- state \s -> Tuple s s
-  (unwrap env.program.renderer).onState state (runFreshThread env)
+  state' <- state \s -> Tuple s s
+  (unwrap env.program.renderer).onState state' (runFreshThread env)
 
 checkExit :: forall msg sta. Env msg sta -> msg -> Aff Unit -> Aff Unit
 checkExit env@{ stateHandler: State state } msg cont = do
-  state <- state \s -> Tuple s s
-  if env.config.exitIf msg state then do
+  state' <- state \s -> Tuple s s
+  if env.config.exitIf msg state' then do
     threads <- liftEffect $ Ref.read env.threadsRef
     threads
       # Map.values
       # traverse_ (Aff.killFiber $ error "Cleanup error")
     (unwrap env.program.renderer).onFinish
-    liftEffect $ env.programCallback $ Right state
+    liftEffect $ env.programCallback $ Right state'
   else
     cont

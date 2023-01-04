@@ -41,7 +41,7 @@ mkRenderer opts view = Renderer
   , onFinish
   }
   where
-  onInit = do
+  onInit _ = do
     when opts.clearScreen do
       eraseScreen
       cursorMoveDown 200

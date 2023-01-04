@@ -140,7 +140,7 @@ mkRenderer :: forall msg sta. View msg sta -> Config -> Renderer msg sta
 mkRenderer view cfg = Renderer
   { onInit, onState, onFinish }
   where
-  onInit = do
+  onInit _ = do
     when cfg.clearScreen do
       eraseScreen
       cursorMoveDown 200

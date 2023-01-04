@@ -40,7 +40,7 @@ newtype Controller msg sta = Controller
 -- | - `onState` runs on every state update
 -- | - `onFinish` runs before the state machine exits
 newtype Renderer msg sta = Renderer
-  { onInit :: Aff Unit
+  { onInit :: (msg -> Aff Unit) -> Aff Unit
   , onState :: sta -> (msg -> Aff Unit) -> Aff Unit
   , onFinish :: Aff Unit
   }
