@@ -20,7 +20,7 @@ import Effect.Aff (Aff)
 
 -- | Low level state implementation that allows to derive reading and updating
 -- | state functions
-newtype State s m = State (forall a. (s -> (Tuple a s)) -> m a)
+newtype State s m = State (forall a. (s -> Tuple a s) -> m a)
 
 -- | Defines how messages can be triggered by the runtime
 type SendMsg msg m = msg -> m Unit

@@ -64,11 +64,13 @@ type Program msg sta =
 -- | - `initialMsg` useful if the first message event is not triggered by user input.
 -- | - `onEvent` lets you observe events that occur inside the `marionette`
 -- |   runtime. This is useful for either debugging or other kind of state
--- |   machine flow analysis. 
+-- |   machine flow analysis.
+-- | - `stateHandler` The state implementation that is used by the runtime. 
 type Config msg sta =
   { exitIf :: msg -> sta -> Boolean
   , initialMsg :: Maybe msg
   , onEvent :: ProgramEvent msg sta -> Effect Unit
+  , stateHandler :: sta -> Effect (State sta Aff)
   }
 
 -- | Every time a message is raised a new thread with an unique `ThreadId` is created that has read and
@@ -89,7 +91,7 @@ data EventType msg sta
   | NewState ThreadId sta
 
 type Env msg sta =
-  { stateRef :: Ref sta
+  { stateHandler :: State sta Aff
   , nextThreadIdRef :: Ref ThreadId
   , threadsRef :: Ref (Map ThreadId (Fiber Unit))
   , programCallback :: Either Error sta -> Effect Unit
@@ -102,12 +104,23 @@ noController :: forall msg sta. Controller msg sta
 noController = Controller \_ _ _ -> pure unit
 
 -- | Some defaults for the [Config](#t:Config) type
-defaultConfig :: forall msg sta. Config msg sta
+defaultConfig :: forall msg sta. Eq sta => Config msg sta
 defaultConfig =
   { initialMsg: Nothing
   , exitIf: neverExit
   , onEvent: \_ -> pure unit
+  , stateHandler: stateHandlerRef
   }
+
+stateHandlerRef :: forall s. Eq s => s -> Effect (State s Aff)
+stateHandlerRef initialState = do
+  stateRef <- Ref.new initialState
+
+  pure $ State \f -> liftEffect $ do
+    s <- Ref.read stateRef
+    let Tuple x s' = f s
+    pure x <* when (s /= s') do
+      Ref.write s' stateRef
 
 -- | Takes a stateful program specification and some configuration and runs the
 -- | program in an `Aff` context.
@@ -116,13 +129,13 @@ defaultConfig =
 -- | threads are aborted.
 runProgram :: forall msg sta. Eq sta => Program msg sta -> Config msg sta -> Aff sta
 runProgram program config = makeAff \programCallback -> do
-  stateRef <- Ref.new program.initialState
+  stateHandler <- config.stateHandler program.initialState
   threadsRef <- Ref.new Map.empty
   nextThreadIdRef <- Ref.new (ThreadId 0)
 
   let
     env =
-      { stateRef
+      { stateHandler
       , threadsRef
       , nextThreadIdRef
       , program
@@ -186,8 +199,8 @@ mkProgramEvent ev = do
   pure $ ProgramEvent instant ev
 
 cleanup :: forall msg sta. Env msg sta -> Aff Unit
-cleanup { stateRef, threadsRef, programCallback, program } = do
-  state <- liftEffect $ Ref.read stateRef
+cleanup { stateHandler: State state, threadsRef, programCallback, program } = do
+  state <- state \s -> Tuple s s
   threads <- liftEffect $ Ref.read threadsRef
   threads
     # Map.values
@@ -210,7 +223,11 @@ runFreshThread env msg = checkExit env msg do
 
   liftEffect $ env.config.onEvent =<< mkProgramEvent (NewMsg id msg)
 
-  fiber <- liftEffect $ launchAff $ (unwrap env.program.controller) (runFreshThread env) (mkStateImpl env id) msg
+  fiber <- liftEffect $ launchAff $
+    (unwrap env.program.controller)
+      (runFreshThread env)
+      (hookStateHandler env.stateHandler env id)
+      msg
   liftEffect $ Ref.modify_ (Map.insert id fiber) env.threadsRef
   Aff.joinFiber fiber
 
@@ -220,24 +237,27 @@ runFreshThread env msg = checkExit env msg do
 
   pure unit
 
-mkStateImpl :: forall msg sta. Eq sta => Env msg sta -> ThreadId -> State sta Aff
-mkStateImpl env id = State \f -> do
-  s <- liftEffect $ Ref.read env.stateRef
+hookStateHandler :: forall msg sta. Eq sta => State sta Aff -> Env msg sta -> ThreadId -> State sta Aff
+hookStateHandler (State st1) env id = State \f -> do
+  s <- st1 get
   let Tuple x s' = f s
 
   pure x <* when (s /= s') do
     liftEffect $ env.config.onEvent =<< mkProgramEvent (NewState id s')
-    liftEffect $ Ref.write s' env.stateRef
+    st1 $ set s'
     view env
+  where
+  get s = Tuple s s
+  set s _ = Tuple unit s
 
 view :: forall msg sta. Eq sta => Env msg sta -> Aff Unit
-view env = do
-  state <- liftEffect $ Ref.read env.stateRef
+view env@{ stateHandler: State state } = do
+  state <- state \s -> Tuple s s
   (unwrap env.program.renderer).onState state (runFreshThread env)
 
 checkExit :: forall msg sta. Env msg sta -> msg -> Aff Unit -> Aff Unit
-checkExit env msg cont = do
-  state <- liftEffect $ Ref.read env.stateRef
+checkExit env@{ stateHandler: State state } msg cont = do
+  state <- state \s -> Tuple s s
   if env.config.exitIf msg state then do
     threads <- liftEffect $ Ref.read env.threadsRef
     threads
