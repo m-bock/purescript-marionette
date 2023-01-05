@@ -15,7 +15,7 @@ spago install marionette
 
 ## About
 
-By itself `marionette` is agnostic of how the "Control" part and the "View" part is handled. Thus for each a `marionette` program you have to chose a "controller" (1) and a "renderer" (2).
+By itself `marionette` is agnostic of how the "Control" part and the "View" part is handled. Thus for each `marionette` program you have to chose a "controller" (1) and a "renderer" (2).
 
 1. This packages includes a couple of controllers:
 
