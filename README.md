@@ -1,84 +1,22 @@
 # purescript-marionette
 
-`marionette` is a small PureScript only MVC library for writing CLI programs. 
+`marionette` is a small PureScript only MVC library.
 
-## Installation
+By itself it is agnostic of how the "Control" part and the "View" part is handled. Thus for each a `marionette` program you have to chose a "controller" (1) and a "renderer" (2).
 
-```
-spago install marionette
-```
+1. This packages includes a couple of controllers:
 
-## Getting started
+    - `PureController` A simplistic controller that is completely pure and does not perform any side effects.
+    - `ControlAPI` Control handler that runs in `Aff` and provides a beginner friendly API to handle state updates with effects.
+    - `Monadic` The most flexible way to handle state control via a `MarionetteT` monad transformer.
 
-In the simplest form a `marionette` program can look like this:
+2. Renderers are very environment specific and are defined in other packages:
 
-```hs
-type State = Int
+    - [marionette-commander](https://github.com/thought2/purescript-marionette-commander) A renderer for the command line
+    - [marionette-react-basic](https://github.com/thought2/purescript-marionette-react-basic) A react-basic-hooks renderer that provides a simple `useMarionette` hook.
 
-data Msg = CountUp | CountDown
+With those options at hand you can for instance run the same state machine as CLI and in the browser. The renderer packages contain complete examples.
 
-update :: Msg -> State -> State
-update msg state = case msg of
-  CountUp -> state + 1
-  CountDown -> state - 1
-
-view :: State -> CliSurface Msg
-view count = CliSurface
-  ( TextOutput $
-      "Current count: " <> show count
-  )
-  ( KeyInput (KeyPrompt "Use up/down keys") case _ of
-      { name: "up" } -> Just CountUp
-      { name: "down" } -> Just CountDown
-      _ -> Nothing
-  )
-
-initialState :: State
-initialState = 0
-```
-
-It's a counter that runs in the terminal, the user can count up and down by using the arrow keys. Check out the full code in the `examples` folder.
-
-
-
-## Examples
-
-### PureCounter
-
-[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/PureCounter.purs)
-
-```
-spago run --main Test.Examples.PureCounter
-```
-
-<img src="assets/PureCounter.gif"/>
-
-### CountDown
-
-[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/CountDown.purs)
-
-```
-spago run --main Test.Examples.CountDown
-```
-
-<img src="assets/CountDown.gif"/>
-
-### WordTicker
-
-[Source](https://github.com/thought2/purescript-marionette/blob/main/test/Examples/WordTicker.purs)
-
-```
-spago run --main Test.Examples.WordTicker
-```
-
-<img src="assets/WordTicker.gif"/>
-
-
-### Snake
-
-The snake implementation can be found in [this repo](https://github.com/thought2/purescript-marionette.snake-demo).
-
-<img src="https://raw.githubusercontent.com/thought2/purescript-marionette.snake-demo/main/assets/demo.gif"/>
 
 ## FAQ
 
@@ -94,21 +32,11 @@ The snake implementation can be found in [this repo](https://github.com/thought2
 
   A: For now there's no special subscription mechanism implemented. However, besides state updates you can also trigger new messages from within asynchronous control handlers. As the examples show, with this you can implement subscriptions manually.
 
-- Q: Does it only run in Node or can I use it in the browser, too?
-
-  A: Currently it only runs in Node. But there are plans to provide a renderer for ReactBasic, too.
-
 - Q: If many control handlers can run asynchronously and can even trigger new ones recursively. How about memory leaks?
 
   A: For the time the state machine is running you have to take care about this manually. However, all running control handlers are canceled automatically once the state machine exits.
 
-## Inspired By
 
-- [brick](https://hackage.haskell.org/package/brick)
-  A declarative Unix terminal UI library written in Haskell
-- [ink](https://github.com/vadimdemedes/ink)
-  React for interactive command-line apps
-  
 ## Documentation
 
 - Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-marionette).
