@@ -199,8 +199,7 @@ mkProgramEvent ev = do
   pure $ ProgramEvent instant ev
 
 cleanup :: forall msg sta. Env msg sta -> Aff Unit
-cleanup { stateHandler: State state, threadsRef, programCallback, program } = do
-  state <- state \s -> Tuple s s
+cleanup { threadsRef, program } = do
   threads <- liftEffect $ Ref.read threadsRef
   threads
     # Map.values

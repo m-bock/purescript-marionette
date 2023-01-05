@@ -50,8 +50,8 @@ instance MonadTrans (MarionetteT msg sta)
 
 instance Monad m => MonadState sta (MarionetteT msg sta m) where
   state f = MarionetteT do
-    MarionetteEnv { state: State state } <- ask
-    lift $ state f
+    MarionetteEnv { state: State state' } <- ask
+    lift $ state' f
 
 -- | Triggers a new message from within a control handler
 sendMsg :: forall msg sta m. Monad m => msg -> MarionetteT msg sta m Unit
