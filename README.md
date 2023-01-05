@@ -2,7 +2,20 @@
 
 `marionette` is a small PureScript only MVC library.
 
-By itself it is agnostic of how the "Control" part and the "View" part is handled. Thus for each a `marionette` program you have to chose a "controller" (1) and a "renderer" (2).
+## Documentation
+
+- Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-marionette).
+
+
+## Installation
+
+```
+spago install marionette
+```
+
+## About
+
+By itself `marionette` is agnostic of how the "Control" part and the "View" part is handled. Thus for each a `marionette` program you have to chose a "controller" (1) and a "renderer" (2).
 
 1. This packages includes a couple of controllers:
 
@@ -16,7 +29,6 @@ By itself it is agnostic of how the "Control" part and the "View" part is handle
     - [marionette-react-basic](https://github.com/thought2/purescript-marionette-react-basic) A react-basic-hooks renderer that provides a simple `useMarionette` hook.
 
 With those options at hand you can for instance run the same state machine as CLI and in the browser. The renderer packages contain complete examples.
-
 
 ## FAQ
 
@@ -36,7 +48,3 @@ With those options at hand you can for instance run the same state machine as CL
 
   A: For the time the state machine is running you have to take care about this manually. However, all running control handlers are canceled automatically once the state machine exits.
 
-
-## Documentation
-
-- Module documentation is [published on Pursuit](http://pursuit.purescript.org/packages/purescript-marionette).
