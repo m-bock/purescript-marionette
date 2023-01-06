@@ -5,13 +5,17 @@ module Marionette.Controllers.Monadic
   ( Control
   , MarionetteT
   , mkController
+  , modifyDo
   , sendMsg
-  ) where
+  )
+  where
 
 import Prelude
 
 import Control.Monad.Reader (class MonadTrans, ReaderT, ask, lift, runReaderT)
-import Control.Monad.State (class MonadState)
+import Control.Monad.State (class MonadState, state)
+import Data.Tuple (Tuple)
+import Data.Tuple as Tpl
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Class (class MonadEffect)
@@ -69,6 +73,29 @@ type Control msg sta m = msg -> MarionetteT msg sta m Unit
 
 --------------------------------------------------------------------------------
 --- Util
+--------------------------------------------------------------------------------
+
+-- | If you like to do both a state update and trigger some side effect
+-- | afterwards it's tempting to use a combination of `get` and `put`: 
+-- | ```
+-- | get >>= case _ of
+-- |   StateA -> do
+-- |     put StateB
+-- |     doSomAction
+-- | ```
+-- | But depending on the monad implementation there may not be a guarantee that
+-- | the state is the same at the times that `get` and `put` are executed.
+-- | `modifyDo` provides a safer and cleaner alternative:
+-- | ```
+-- | modifyDo case _ of
+-- |   StateA -> StateB /\
+-- |     doSomAction
+-- | ```
+modifyDo :: forall s m a. MonadState s m => (s -> Tuple s (m a)) -> m a
+modifyDo f = state (f >>> Tpl.swap) >>= identity
+
+--------------------------------------------------------------------------------
+--- Internal Util
 --------------------------------------------------------------------------------
 
 newtype MarionetteEnv msg sta (m :: Type -> Type) =
