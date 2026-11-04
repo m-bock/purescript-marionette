@@ -1,8 +1,8 @@
 build:
-    spago build --purs-args "--stash"
+    spago build
 
 build-ide:
-    spago build --purs-args "--stash --json-errors"
+    spago build --json-errors
 
 format:
     purs-tidy format-in-place 'src/**/*.purs'

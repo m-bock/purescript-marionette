@@ -9,6 +9,8 @@
     flake = false;
   };
 
+  inputs.purescript-overlay.url = "github:thomashoneyman/purescript-overlay";
+
   inputs.flake-utils.url = github:numtide/flake-utils;
 
   outputs = inputs:
@@ -41,7 +43,7 @@
             pkgs.psa
             pkgs.purs-tidy
             pkgs.bashInteractive
-            pkgs.spago
+            inputs.purescript-overlay.packages.${system}.spago
             pkgs.nodePackages.prettier
             pkgs.just
             pkgs.yarn
